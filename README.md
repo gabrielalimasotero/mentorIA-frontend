@@ -133,4 +133,6 @@ Wilton Sales [Github] https://github.com/WilSales
 
 https://mentor-ia-learn.lovable.app/
 
+[Prompts] https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?usp=sharing
+
 
