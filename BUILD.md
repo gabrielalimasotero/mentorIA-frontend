@@ -1,95 +1,110 @@
-# Build and Setup Instructions
 
-This document provides step-by-step instructions for setting up and running the MentorIA frontend project locally.
+# Instruções de Build e Setup
 
-## Prerequisites
+Este documento fornece instruções passo a passo para configurar e executar o projeto **MentorIA Frontend** localmente.
 
-Before you begin, ensure you have the following installed on your system:
+## Pré-requisitos
 
-- Node.js (version 18 or higher recommended)
-- pnpm (version 9.3.0 or higher)
-- Git
+Antes de começar, certifique-se de ter os seguintes itens instalados no seu sistema:
 
-## Installation Steps
+- **Node.js** (recomendado versão 18 ou superior)
+- **pnpm** (versão 9.3.0 ou superior)
+- **Git**
 
-1. Clone the repository:
-   ```bash
-   git clone [repository-url]
-   cd mentorIA-frontend
-   ```
+---
 
-2. Install dependencies using pnpm:
-   ```bash
-   pnpm install
-   ```
+## Passos para Instalação
 
-## Running the Application
+1. Clone o repositório:
 
-### Development Mode
+```bash
+git clone [repository-url]
+cd mentorIA-frontend
+```
 
-To run the application in development mode with hot-reload:
+2. Instale as dependências utilizando o pnpm:
+
+```bash
+pnpm install
+```
+
+---
+
+## Executando a Aplicação
+
+### Modo Desenvolvimento
+
+Para rodar a aplicação em modo desenvolvimento (com hot-reload):
 
 ```bash
 pnpm dev
 ```
 
-The application will be available at `http://localhost:3000`
+A aplicação estará disponível em: [http://localhost:3000](http://localhost:3000)
 
-### Production Build
+### Build de Produção
 
-To create a production build:
+Para gerar um build de produção:
 
 ```bash
 pnpm build
 ```
 
-To start the production server:
+Para iniciar o servidor de produção:
 
 ```bash
 pnpm start
 ```
 
-## Available Scripts
+---
 
-- `pnpm dev` - Starts the development server
-- `pnpm build` - Creates a production build
-- `pnpm start` - Runs the production server
-- `pnpm lint` - Runs ESLint to check code quality
-- `pnpm format` - Checks code formatting using Prettier
-- `pnpm format:write` - Automatically fixes code formatting issues
+## Scripts Disponíveis
 
-## Environment Setup
+- `pnpm dev` – Inicia o servidor de desenvolvimento
+- `pnpm build` – Gera o build para produção
+- `pnpm start` – Executa o servidor em modo produção
+- `pnpm lint` – Executa o ESLint para checar a qualidade do código
+- `pnpm format` – Verifica a formatação do código com o Prettier
+- `pnpm format:write` – Corrige automaticamente problemas de formatação
 
-The project uses Next.js and requires certain environment variables to be set up. Create a `.env.local` file in the root directory with the following variables:
+---
+
+## Configuração de Ambiente
+
+O projeto utiliza **Next.js** e requer algumas variáveis de ambiente. Crie um arquivo chamado `.env.local` na raiz do projeto com as variáveis necessárias, por exemplo:
 
 ```env
-# Add any required environment variables here
-# Example:
+# Adicione aqui as variáveis de ambiente necessárias
+# Exemplo:
 # NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-## Project Structure
+---
 
-Key directories and their purposes:
+## Estrutura do Projeto
 
-- `/app` - Next.js application routes and pages
-- `/components` - Reusable React components
-- `/lib` - Utility functions and shared logic
-- `/public` - Static assets
+Diretórios principais e suas funções:
 
-## Common Issues and Solutions
+- `/app` – Rotas e páginas da aplicação (Next.js)
+- `/components` – Componentes React reutilizáveis
+- `/lib` – Funções utilitárias e lógica compartilhada
+- `/public` – Arquivos estáticos (imagens, etc.)
 
-### Port Already in Use
+---
 
-If port 3000 is already in use, you can start the development server on a different port:
+## Problemas Comuns e Soluções
+
+### Porta já em uso
+
+Se a porta `3000` já estiver ocupada, você pode iniciar o servidor de desenvolvimento em outra porta:
 
 ```bash
 pnpm dev -p 3001
 ```
 
-### Node Modules Issues
+### Problemas com Node Modules
 
-If you encounter issues with node modules, try cleaning the cache and reinstalling:
+Se ocorrerem problemas relacionados aos módulos Node, tente limpar o cache e reinstalar:
 
 ```bash
 rm -rf node_modules
@@ -97,28 +112,35 @@ pnpm store prune
 pnpm install
 ```
 
-### Build Errors
+### Erros no Build
 
-If you encounter build errors:
-1. Make sure all dependencies are properly installed
-2. Clear the Next.js cache:
-   ```bash
-   rm -rf .next
-   pnpm build
-   ```
+Se ocorrerem erros no processo de build:
 
-## Tech Stack
+1. Verifique se todas as dependências estão corretamente instaladas.
+2. Limpe o cache do Next.js e tente novamente:
 
-This project uses:
-- Next.js 14
-- React 18
-- TypeScript
-- TailwindCSS
-- Clerk for authentication
-- Various UI components from Radix UI
+```bash
+rm -rf .next
+pnpm build
+```
 
-## Performance Considerations
+---
 
-- The development server may take a few moments to start initially
-- First build might take longer due to optimization processes
-- Enable JavaScript in your browser as this is a React application 
+## Tecnologias Utilizadas
+
+O projeto utiliza:
+
+- **Next.js 14**
+- **React 18**
+- **TypeScript**
+- **TailwindCSS**
+- **Clerk** (para autenticação)
+- **Radix UI** (componentes de interface)
+
+---
+
+## Considerações de Performance
+
+- O servidor de desenvolvimento pode levar alguns segundos para iniciar na primeira vez.
+- O primeiro build pode ser mais demorado devido aos processos de otimização.
+- Certifique-se de que o JavaScript está habilitado no navegador, já que esta é uma aplicação React.
