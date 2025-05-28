@@ -66,9 +66,9 @@ A proposta é transformar a forma como estudantes identificam seus pontos fortes
 | #4    | Estrutura inicial de testes unitários | `testing`, `infra`          |
 
 ### Issues
+
 - [Lista de Issues](https://github.com/Luanromancin/mentorIA-backend/issues)
-- [Good First Issues](https://github.com/Luanromancin/mentorIA-backend/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first
-+issue%22)
+- [Good First Issues](https://github.com/Luanromancin/mentorIA-backend/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
 
 ## 📚 Recursos Importantes
 
@@ -79,10 +79,9 @@ A proposta é transformar a forma como estudantes identificam seus pontos fortes
 
 ## 🔗 Links Úteis
 
-- [MockUp e PitchDeck](https://mentor-ia-learn.lovable.app/)
-- [Documentação de Prompts](https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?
-usp=sharing)
-
+- [MockUp Lovable e PitchDeck](https://mentor-ia-learn.lovable.app/)
+- [Documentação de Prompts](https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?usp=sharing)
+  
 ## 👥 Equipe
 
 - Antonio Gabriel - [GitHub](https://github.com/gabrielclemnt)
