@@ -70,4 +70,6 @@ https://mentor-ia-learn.lovable.app/
 
 [Prompts](https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?usp=sharing)
 
+#Usaremos o Precedent – Next.js Template by Vercel
+
 
