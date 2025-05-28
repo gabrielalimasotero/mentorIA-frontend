@@ -1,4 +1,4 @@
-# 🚀 MentorIA – Frontend
+### 🚀 MentorIA – Frontend
 
 ## Projeto desenvolvido para Disciplina de Engenharia de Software da Universidade Federal de Pernambuco.
 
@@ -6,9 +6,9 @@ Frontend da plataforma MentorIA, um tutor digital que identifica suas dificuldad
 
 Nossa demonstração almeja fazer uma prova de conceito a partir das questões de matemática do enem.
 
-### ✅ Este repositório corresponde **ao frontend.** O backend está disponível [aqui](https://github.com/luanromancin/mentorIA-Backend).
-### ✅ Build [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/BUILD.md)
-### ✅ Contributing [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/CONTRIBUTING.md)
+## ✅ Este repositório corresponde **ao frontend.** O backend está disponível [aqui](https://github.com/luanromancin/mentorIA-Backend).
+## ✅ Build [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/BUILD.md)
+## ✅ Contributing [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/CONTRIBUTING.md)
 
 ---
 
