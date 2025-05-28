@@ -6,9 +6,9 @@ Frontend da plataforma MentorIA, um tutor digital que identifica suas dificuldad
 
 Nossa demonstração almeja fazer uma prova de conceito a partir das questões de matemática do enem.
 
-> ✅ Este repositório corresponde **ao frontend.** O backend está disponível [aqui](https://github.com/luanromancin/mentorIA-Backend).
-> Build [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/BUILD.md)
-> Contributing [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/CONTRIBUTING.md)
+### ✅ Este repositório corresponde **ao frontend.** O backend está disponível [aqui](https://github.com/luanromancin/mentorIA-Backend).
+### ✅ Build [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/BUILD.md)
+### ✅ Contributing [aqui](https://github.com/gabrielalimasotero/mentorIA-frontend/blob/main/CONTRIBUTING.md)
 
 ---
 
@@ -77,6 +77,12 @@ A proposta é transformar a forma como estudantes identificam seus pontos fortes
 - [Ferramenta de Revisão de Código](https://github.com/Luanromancin/mentorIA-backend/pulls)
 - [Rastreador de Problemas](https://github.com/Luanromancin/mentorIA-backend/issues)
 
+## 🔗 Links Úteis
+
+- [MockUp e PitchDeck](https://mentor-ia-learn.lovable.app/)
+- [Documentação de Prompts](https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?
+usp=sharing)
+
 ## 👥 Equipe
 
 - Antonio Gabriel - [GitHub](https://github.com/gabrielclemnt)
@@ -87,11 +93,4 @@ A proposta é transformar a forma como estudantes identificam seus pontos fortes
 ## 📝 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## 🔗 Links Úteis
-
-- [MockUp e PitchDeck](https://mentor-ia-learn.lovable.app/)
-- [Documentação de Prompts](https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?
-usp=sharing)
-
 
