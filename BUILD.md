@@ -18,7 +18,7 @@ Antes de começar, certifique-se de ter os seguintes itens instalados no seu sis
 1. Clone o repositório:
 
 ```bash
-git clone [repository-url]
+git clone [https://github.com/gabrielalimasotero/mentorIA-frontend]
 cd mentorIA-frontend
 ```
 
@@ -40,7 +40,7 @@ Para rodar a aplicação em modo desenvolvimento (com hot-reload):
 pnpm dev
 ```
 
-A aplicação estará disponível em: [http://localhost:3000](http://localhost:3000)
+A aplicação estará disponível [http://localhost:3000](http://localhost:3000)
 
 ### Build de Produção
 
