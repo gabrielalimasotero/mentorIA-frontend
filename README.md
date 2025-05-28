@@ -56,22 +56,42 @@ A proposta é transformar a forma como estudantes identificam seus pontos fortes
 | *Gestão*    | GitHub Projects (Kanban e gestão ágil)   |
 
 ---
+🧩 Issues Iniciais
+
+| Issue | Título                                | Labels                      |
+| ----- | ------------------------------------- | --------------------------- |
+| #1    | Setup do Prisma + Banco no Railway    | `good first issue`, `setup` |
+| #2    | Criação de rota de autenticação OAuth | `backend`, `auth`           |
+| #3    | Integração com API Gemini para trilha | `intelligence`, `api`       |
+| #4    | Estrutura inicial de testes unitários | `testing`, `infra`          |
+
+### Issues
+- [Lista de Issues](https://github.com/Luanromancin/mentorIA-backend/issues)
+- [Good First Issues](https://github.com/Luanromancin/mentorIA-backend/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first
++issue%22)
+
+## 📚 Recursos Importantes
+
+- [Documentação da API](docs/api.md)
+- [Workspace do Projeto](https://github.com/orgs/mentorIA/projects/1)
+- [Ferramenta de Revisão de Código](https://github.com/Luanromancin/mentorIA-backend/pulls)
+- [Rastreador de Problemas](https://github.com/Luanromancin/mentorIA-backend/issues)
 
 ## 👥 Equipe
 
-### Antonio Gabriel [Github](https://github.com/gabrielclemnt)
-### Gabriela Lima Sotero [Github](https://github.com/gabrielalimasotero)
-### Luan Romancini [Github](https://github.com/Luanromancin)
-### Wilton Sales [Github](https://github.com/WilSales)
+- Antonio Gabriel - [GitHub](https://github.com/gabrielclemnt)
+- Gabriela Lima Sotero - [GitHub](https://github.com/gabrielalimasotero)
+- Luan Romancini - [GitHub](https://github.com/Luanromancin)
+- Wilton Sales - [GitHub](https://github.com/WilSales)
 
----
+## 📝 Licença
 
-## 🔗 MockUp and PitchDeck
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-https://mentor-ia-learn.lovable.app/
+## 🔗 Links Úteis
 
-[Prompts](https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?usp=sharing)
-
-#Usaremos o Precedent – Next.js Template by Vercel
+- [MockUp e PitchDeck](https://mentor-ia-learn.lovable.app/)
+- [Documentação de Prompts](https://docs.google.com/document/d/1vQBVSXb1nNO8Fk_R4xubxmScVkbGHsDdypeyhnjqInc/edit?
+usp=sharing)
 
 
