@@ -47,7 +47,7 @@ A proposta é transformar a forma como estudantes identificam seus pontos fortes
 
 | Camada       | Tecnologias                              |
 |----------------|-------------------------------------------|
-| *Frontend*  | Node.js + TypeScript (Framework como Next.js ou Vite) |
+| *Frontend*  | Next.js + React + TypeScript + TailwindCSS + shadcn/ui |
 | *Backend*   | Node.js + Express + Prisma + TypeScript  |
 | *Banco*     | PostgreSQL (Hospedado na nuvem — Railway ou Neon) |
 | *Infraestrutura* | Railway (Backend + DB) + Vercel (Frontend) ou outro |
