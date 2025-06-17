@@ -2,7 +2,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, X, Target } from 'lucide-react';
+import { CheckCircle, X, Target, BarChart3 } from 'lucide-react';
+import { useState } from 'react';
+import UserProfile from './UserProfile';
 
 interface Question {
   id: number;
@@ -21,6 +23,8 @@ interface ResultsReviewProps {
 }
 
 const ResultsReview = ({ answers, questions, onComplete, title, type }: ResultsReviewProps) => {
+  const [showProfile, setShowProfile] = useState(false);
+  
   const correctCount = answers.filter((answer, index) => 
     answer === questions[index].correctAnswer
   ).length;
@@ -64,124 +68,141 @@ const ResultsReview = ({ answers, questions, onComplete, title, type }: ResultsR
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Card className="shadow-lg mb-6">
-        <CardHeader className="text-center bg-gradient-to-r from-blue-50 to-blue-100">
-          <div className="w-16 h-16 mx-auto mb-4 bg-blue-600 rounded-full flex items-center justify-center">
-            <Target className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-2xl text-blue-900 mb-2">
-            {title}
-          </CardTitle>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">
-              {correctCount}/{questions.length}
+    <>
+      <div className="max-w-4xl mx-auto">
+        <Card className="shadow-lg mb-6">
+          <CardHeader className="text-center bg-gradient-to-r from-blue-50 to-blue-100">
+            <div className="w-16 h-16 mx-auto mb-4 bg-blue-700 rounded-full flex items-center justify-center">
+              <Target className="w-8 h-8 text-white" />
             </div>
-            <div className="text-lg text-gray-600">
-              {percentage}% de aproveitamento
+            <CardTitle className="text-2xl text-blue-900 mb-2">
+              {title}
+            </CardTitle>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-900 mb-2">
+                {correctCount}/{questions.length}
+              </div>
+              <div className="text-lg text-gray-600">
+                {percentage}% de aproveitamento
+              </div>
             </div>
-          </div>
-        </CardHeader>
-      </Card>
+          </CardHeader>
+        </Card>
 
-      <Card className="shadow-lg mb-6">
-        <CardHeader>
-          <CardTitle className="text-blue-900">Revisão das Respostas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {questions.map((question, index) => {
-              const status = getAnswerStatus(index);
-              const userAnswer = answers[index];
-              
-              return (
-                <div key={question.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-medium text-gray-800">
-                          Questão {index + 1}
-                        </span>
-                        <Badge className={`text-xs ${getStatusColor(status)}`}>
-                          {getStatusIcon(status)}
-                          <span className="ml-1">{getStatusText(status)}</span>
-                        </Badge>
-                        {type === 'training' && (
-                          <Badge variant="outline" className="text-blue-600 border-blue-200 text-xs">
-                            {question.topic}
+        <Card className="shadow-lg mb-6">
+          <CardHeader>
+            <CardTitle className="text-blue-900">Revisão das Respostas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {questions.map((question, index) => {
+                const status = getAnswerStatus(index);
+                const userAnswer = answers[index];
+                
+                return (
+                  <div key={question.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-medium text-gray-800">
+                            Questão {index + 1}
+                          </span>
+                          <Badge className={`text-xs ${getStatusColor(status)}`}>
+                            {getStatusIcon(status)}
+                            <span className="ml-1">{getStatusText(status)}</span>
                           </Badge>
-                        )}
+                          {type === 'training' && (
+                            <Badge variant="outline" className="text-blue-700 border-blue-200 text-xs">
+                              {question.topic}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-gray-700 mb-3">{question.question}</p>
                       </div>
-                      <p className="text-gray-700 mb-3">{question.question}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {question.options.map((option, optionIndex) => {
+                        const isCorrect = optionIndex === question.correctAnswer;
+                        const isUserAnswer = optionIndex === userAnswer;
+                        
+                        let bgColor = 'bg-gray-50';
+                        let borderColor = 'border-gray-200';
+                        let textColor = 'text-gray-700';
+                        
+                        if (isCorrect) {
+                          bgColor = 'bg-green-50';
+                          borderColor = 'border-green-300';
+                          textColor = 'text-green-800';
+                        } else if (isUserAnswer && !isCorrect) {
+                          bgColor = 'bg-red-50';
+                          borderColor = 'border-red-300';
+                          textColor = 'text-red-800';
+                        }
+                        
+                        return (
+                          <div
+                            key={optionIndex}
+                            className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {String.fromCharCode(65 + optionIndex)}
+                              </span>
+                              <span className="flex-1">{option}</span>
+                              {isCorrect && <CheckCircle className="w-4 h-4 text-green-600" />}
+                              {isUserAnswer && !isCorrect && <X className="w-4 h-4 text-red-600" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    <div className="mt-3 text-sm text-gray-600">
+                      {userAnswer !== null ? (
+                        <span>
+                          Sua resposta: <strong>{String.fromCharCode(65 + userAnswer)}</strong> | 
+                          Resposta correta: <strong>{String.fromCharCode(65 + question.correctAnswer)}</strong>
+                        </span>
+                      ) : (
+                        <span>
+                          Questão pulada | 
+                          Resposta correta: <strong>{String.fromCharCode(65 + question.correctAnswer)}</strong>
+                        </span>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {question.options.map((option, optionIndex) => {
-                      const isCorrect = optionIndex === question.correctAnswer;
-                      const isUserAnswer = optionIndex === userAnswer;
-                      
-                      let bgColor = 'bg-gray-50';
-                      let borderColor = 'border-gray-200';
-                      let textColor = 'text-gray-700';
-                      
-                      if (isCorrect) {
-                        bgColor = 'bg-green-50';
-                        borderColor = 'border-green-300';
-                        textColor = 'text-green-800';
-                      } else if (isUserAnswer && !isCorrect) {
-                        bgColor = 'bg-red-50';
-                        borderColor = 'border-red-300';
-                        textColor = 'text-red-800';
-                      }
-                      
-                      return (
-                        <div
-                          key={optionIndex}
-                          className={`p-3 rounded-lg border-2 ${bgColor} ${borderColor} ${textColor}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              {String.fromCharCode(65 + optionIndex)}
-                            </span>
-                            <span className="flex-1">{option}</span>
-                            {isCorrect && <CheckCircle className="w-4 h-4 text-green-600" />}
-                            {isUserAnswer && !isCorrect && <X className="w-4 h-4 text-red-600" />}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  
-                  <div className="mt-3 text-sm text-gray-600">
-                    {userAnswer !== null ? (
-                      <span>
-                        Sua resposta: <strong>{String.fromCharCode(65 + userAnswer)}</strong> | 
-                        Resposta correta: <strong>{String.fromCharCode(65 + question.correctAnswer)}</strong>
-                      </span>
-                    ) : (
-                      <span>
-                        Questão pulada | 
-                        Resposta correta: <strong>{String.fromCharCode(65 + question.correctAnswer)}</strong>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className="text-center">
-        <Button 
-          onClick={onComplete}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold"
-        >
-          {type === 'diagnostic' ? 'Ir para Treinamento' : 'Continuar'}
-        </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+          <Button 
+            onClick={() => setShowProfile(true)}
+            variant="outline"
+            className="bg-white hover:bg-gray-50 text-blue-800 border-blue-200 px-6 py-3 text-lg font-semibold"
+          >
+            <BarChart3 className="w-5 h-5 mr-2" />
+            Ver Detalhamento
+          </Button>
+          
+          <Button 
+            onClick={onComplete}
+            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 text-lg font-semibold"
+          >
+            {type === 'diagnostic' ? 'Ir para Treinamento' : 'Continuar'}
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <UserProfile 
+        isOpen={showProfile}
+        onClose={() => setShowProfile(false)}
+        user="Usuário"
+      />
+    </>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import {
   CheckCircle, 
   SkipForward, 
   ChevronRight, 
+  ChevronLeft,
   Trophy, 
   Calendar,
   BookOpen,
@@ -47,7 +49,10 @@ const TrainingInterface = () => {
         if (progress.currentSession) {
           setIsTraining(true);
           setCurrentQuestion(progress.currentSession.currentQuestion || 0);
-          setAnswers(progress.currentSession.answers || []);
+          setAnswers(progress.currentSession.answers || new Array(20).fill(null));
+          // Restaurar resposta selecionada se existir
+          const savedAnswers = progress.currentSession.answers || [];
+          setSelectedAnswer(savedAnswers[progress.currentSession.currentQuestion] || null);
         }
       }
     }
@@ -235,12 +240,17 @@ const TrainingInterface = () => {
   };
 
   const handlePause = () => {
-    // Salvar progresso atual
+    // Salvar progresso atual incluindo a resposta selecionada
+    const updatedAnswers = [...answers];
+    if (selectedAnswer !== null) {
+      updatedAnswers[currentQuestion] = selectedAnswer;
+    }
+    
     const sessionProgress = {
       date: new Date().toDateString(),
       currentSession: {
         currentQuestion: currentQuestion,
-        answers: answers
+        answers: updatedAnswers
       },
       completed: dailyProgress
     };
@@ -248,6 +258,31 @@ const TrainingInterface = () => {
     
     // Voltar para a tela principal
     setIsTraining(false);
+  };
+
+  const handleBack = () => {
+    if (currentQuestion > 0) {
+      // Salvar resposta atual antes de voltar
+      const updatedAnswers = [...answers];
+      updatedAnswers[currentQuestion] = selectedAnswer;
+      setAnswers(updatedAnswers);
+      
+      // Voltar uma questão
+      const previousQuestion = currentQuestion - 1;
+      setCurrentQuestion(previousQuestion);
+      setSelectedAnswer(updatedAnswers[previousQuestion]);
+      
+      // Salvar progresso
+      const sessionProgress = {
+        date: new Date().toDateString(),
+        currentSession: {
+          currentQuestion: previousQuestion,
+          answers: updatedAnswers
+        },
+        completed: dailyProgress
+      };
+      localStorage.setItem('training_progress', JSON.stringify(sessionProgress));
+    }
   };
 
   const handleConfirm = () => {
@@ -268,7 +303,7 @@ const TrainingInterface = () => {
     
     if (currentQuestion < 19) {
       setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
+      setSelectedAnswer(newAnswers[currentQuestion + 1]);
     } else {
       // Completou as 20 questões
       const newDailyProgress = dailyProgress + 20;
@@ -319,8 +354,9 @@ const TrainingInterface = () => {
     localStorage.setItem('training_progress', JSON.stringify(sessionProgress));
     
     if (currentQuestion < 19) {
-      setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
+      const nextQuestion = currentQuestion + 1;
+      setCurrentQuestion(nextQuestion);
+      setSelectedAnswer(newAnswers[nextQuestion]);
     } else {
       const newDailyProgress = dailyProgress + 20;
       setDailyProgress(newDailyProgress);
@@ -396,19 +432,19 @@ const TrainingInterface = () => {
           <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl text-blue-800 mb-2">
+                <CardTitle className="text-2xl text-blue-900 mb-2">
                   Treinamento Matemática
                 </CardTitle>
-                <p className="text-blue-600">
+                <p className="text-blue-700">
                   Simulados personalizados baseados no seu diagnóstico
                 </p>
               </div>
               <div className="text-right">
-                <div className="flex items-center gap-2 text-blue-500 mb-1">
+                <div className="flex items-center gap-2 text-blue-600 mb-1">
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm font-medium">Meta Diária</span>
                 </div>
-                <div className="text-2xl font-bold text-blue-800">
+                <div className="text-2xl font-bold text-blue-900">
                   {dailyProgress}/20
                 </div>
               </div>
@@ -436,11 +472,11 @@ const TrainingInterface = () => {
               
               <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-blue-500" />
+                  <BookOpen className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <div className="font-semibold text-blue-700">Nível Atual</div>
-                  <div className="text-sm text-blue-500">Intermediário</div>
+                  <div className="font-semibold text-blue-800">Nível Atual</div>
+                  <div className="text-sm text-blue-600">Intermediário</div>
                 </div>
               </div>
               
@@ -458,7 +494,7 @@ const TrainingInterface = () => {
             <div className="text-center">
               <Button 
                 onClick={handleStartTraining}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 text-lg font-semibold"
+                className="bg-blue-800 hover:bg-blue-900 text-white px-8 py-3 text-lg font-semibold"
               >
                 <Play className="w-5 h-5 mr-2" />
                 {dailyProgress > 0 ? 'Continuar Treinamento' : 'Iniciar Simulado'}
@@ -489,7 +525,7 @@ const TrainingInterface = () => {
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-2xl font-bold text-blue-800">Simulado ENEM - Matemática</h2>
+          <h2 className="text-2xl font-bold text-blue-900">Simulado ENEM - Matemática</h2>
           <span className="text-sm text-gray-600">
             Questão {currentQuestion + 1} de 20
           </span>
@@ -503,11 +539,11 @@ const TrainingInterface = () => {
             <Badge className={`${getDifficultyColor(question.difficulty)}`}>
               {question.difficulty}
             </Badge>
-            <Badge variant="outline" className="text-blue-500 border-blue-200">
+            <Badge variant="outline" className="text-blue-600 border-blue-200">
               {question.topic}
             </Badge>
           </div>
-          <CardTitle className="text-lg text-blue-800">
+          <CardTitle className="text-lg text-blue-900">
             {question.question}
           </CardTitle>
         </CardHeader>
@@ -519,14 +555,14 @@ const TrainingInterface = () => {
                 onClick={() => handleAnswerSelect(index)}
                 className={`w-full p-4 text-left border-2 rounded-lg transition-all duration-200 ${
                   selectedAnswer === index
-                    ? 'border-blue-600 bg-blue-50 text-blue-800'
-                    : 'border-gray-200 hover:border-blue-400 hover:bg-blue-25'
+                    ? 'border-blue-700 bg-blue-50 text-blue-900'
+                    : 'border-gray-200 hover:border-blue-500 hover:bg-blue-25'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                     selectedAnswer === index
-                      ? 'border-blue-600 bg-blue-600'
+                      ? 'border-blue-700 bg-blue-700'
                       : 'border-gray-300'
                   }`}>
                     {selectedAnswer === index && (
@@ -549,6 +585,17 @@ const TrainingInterface = () => {
               <Pause className="w-4 h-4 mr-2" />
               Pausar
             </Button>
+            
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentQuestion === 0}
+              className="border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            
             <Button
               variant="outline"
               onClick={handleSkip}
@@ -557,10 +604,11 @@ const TrainingInterface = () => {
               <SkipForward className="w-4 h-4 mr-2" />
               Pular
             </Button>
+            
             <Button
               onClick={handleConfirm}
               disabled={selectedAnswer === null}
-              className="flex-1 bg-blue-700 hover:bg-blue-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-blue-800 hover:bg-blue-900 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {currentQuestion === 19 ? 'Finalizar' : 'Confirmar'}
               <ChevronRight className="w-4 h-4 ml-2" />
