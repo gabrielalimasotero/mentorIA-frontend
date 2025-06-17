@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { LogOut, ArrowLeft, User, BookOpen } from 'lucide-react';
+import { LogOut, ArrowLeft, User, Brain } from 'lucide-react';
 import UserProfile from './UserProfile';
 import { useState } from 'react';
 
@@ -24,18 +24,18 @@ const Header = ({ user, onLogout, currentView, onBackToTrails }: HeaderProps) =>
                 variant="ghost"
                 size="sm"
                 onClick={onBackToTrails}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                className="text-blue-700 hover:text-blue-800 hover:bg-blue-50"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Voltar às Trilhas
               </Button>
             )}
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                <BookOpen className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center mr-3">
+                <Brain className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-blue-900">
-                Mentor<span className="text-blue-600">IA</span>
+              <h1 className="text-2xl font-bold text-blue-800">
+                Mentor<span className="text-blue-700">IA</span>
               </h1>
             </div>
           </div>
@@ -45,7 +45,7 @@ const Header = ({ user, onLogout, currentView, onBackToTrails }: HeaderProps) =>
               onClick={() => setShowProfile(true)}
               className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
             >
-              <User className="w-4 h-4 text-blue-600" />
+              <User className="w-4 h-4 text-blue-700" />
               <span className="text-blue-800 font-medium">{user}</span>
             </button>
             <Button

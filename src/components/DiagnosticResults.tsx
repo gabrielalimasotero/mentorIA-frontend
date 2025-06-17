@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -66,9 +65,8 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
   };
 
   const handleCompleteWithGoal = () => {
-    // Definir meta inicial como 1 após o diagnóstico
-    const currentGoals = parseInt(localStorage.getItem('user_goals') || '0');
-    localStorage.setItem('user_goals', (currentGoals + 1).toString());
+    // Definir primeira meta após o diagnóstico
+    localStorage.setItem('user_goals', '1');
     onComplete();
   };
 
@@ -88,19 +86,19 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
     <div className="max-w-4xl mx-auto">
       <Card className="shadow-lg mb-6">
         <CardHeader className="text-center bg-gradient-to-r from-blue-50 to-blue-100">
-          <div className="w-16 h-16 mx-auto mb-4 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-blue-700 rounded-full flex items-center justify-center">
             <Target className="w-8 h-8 text-white" />
           </div>
-          <CardTitle className="text-2xl text-blue-900 mb-2">
+          <CardTitle className="text-2xl text-blue-800 mb-2">
             Diagnóstico Concluído!
           </CardTitle>
-          <p className="text-blue-700">
+          <p className="text-blue-600">
             Analisamos seu desempenho para personalizar seus próximos estudos
           </p>
         </CardHeader>
         <CardContent className="pt-6">
           <div className="text-center mb-6">
-            <div className="text-4xl font-bold text-blue-900 mb-2">
+            <div className="text-4xl font-bold text-blue-800 mb-2">
               {overallCorrect}/{questions.length}
             </div>
             <div className="text-lg text-gray-600 mb-4">
@@ -115,7 +113,7 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
 
       <Card className="shadow-lg mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-900">
+          <CardTitle className="flex items-center gap-2 text-blue-800">
             <TrendingUp className="w-5 h-5" />
             Desempenho por Tópico
           </CardTitle>
@@ -153,14 +151,14 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
         <Button 
           onClick={() => setShowReview(true)}
           variant="outline"
-          className="bg-white hover:bg-gray-50 text-blue-600 border-blue-200 px-6 py-3 text-lg font-semibold"
+          className="bg-white hover:bg-gray-50 text-blue-700 border-blue-200 px-6 py-3 text-lg font-semibold"
         >
           Ver Gabarito
         </Button>
         
         <Button 
           onClick={handleCompleteWithGoal}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg font-semibold"
+          className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 text-lg font-semibold"
         >
           <BookOpen className="w-5 h-5 mr-2" />
           Iniciar Treinamento
@@ -170,10 +168,10 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
       <Card className="shadow-lg bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
         <CardContent className="pt-6">
           <div className="text-center">
-            <h3 className="text-xl font-semibold text-blue-900 mb-2">
+            <h3 className="text-xl font-semibold text-blue-800 mb-2">
               Agora vamos personalizar seu treinamento!
             </h3>
-            <p className="text-blue-700">
+            <p className="text-blue-600">
               Com base no seu diagnóstico, nossa IA já sabe como adaptar as questões ao seu nível. 
               Pronto para começar o treinamento intensivo?
             </p>
