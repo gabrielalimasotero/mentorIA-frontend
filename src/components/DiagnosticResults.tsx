@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Target, BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import ResultsReview from './ResultsReview';
 
 interface Question {
   id: number;
@@ -20,6 +22,8 @@ interface DiagnosticResultsProps {
 }
 
 const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResultsProps) => {
+  const [showReview, setShowReview] = useState(false);
+  
   // Calcular performance por tópico
   const topicPerformance = questions.reduce((acc, question, index) => {
     const topic = question.topic;
@@ -55,6 +59,23 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
     if (percentage >= 40) return 'Regular';
     return 'Precisa melhorar';
   };
+
+  const handleReviewComplete = () => {
+    setShowReview(false);
+    onComplete();
+  };
+
+  if (showReview) {
+    return (
+      <ResultsReview 
+        answers={answers}
+        questions={questions}
+        onComplete={handleReviewComplete}
+        title="Diagnóstico Revisado"
+        type="diagnostic"
+      />
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -121,23 +142,34 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
         </CardContent>
       </Card>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Button 
+          onClick={() => setShowReview(true)}
+          variant="outline"
+          className="bg-white hover:bg-gray-50 text-blue-600 border-blue-200 px-6 py-3 text-lg font-semibold"
+        >
+          Ver Gabarito
+        </Button>
+        
+        <Button 
+          onClick={onComplete}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg font-semibold"
+        >
+          <BookOpen className="w-5 h-5 mr-2" />
+          Iniciar Treinamento
+        </Button>
+      </div>
+
       <Card className="shadow-lg bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
         <CardContent className="pt-6">
           <div className="text-center">
-            <BookOpen className="w-12 h-12 text-blue-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-blue-900 mb-2">
               Agora vamos personalizar seu treinamento!
             </h3>
-            <p className="text-blue-700 mb-6">
+            <p className="text-blue-700">
               Com base no seu diagnóstico, nossa IA já sabe como adaptar as questões ao seu nível. 
               Pronto para começar o treinamento intensivo?
             </p>
-            <Button 
-              onClick={onComplete}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-semibold"
-            >
-              Iniciar Treinamento Personalizado
-            </Button>
           </div>
         </CardContent>
       </Card>

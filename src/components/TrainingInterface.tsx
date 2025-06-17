@@ -15,6 +15,7 @@ import {
   Play
 } from 'lucide-react';
 import DailyGoalComplete from './DailyGoalComplete';
+import ResultsReview from './ResultsReview';
 
 interface TrainingQuestion {
   id: number;
@@ -31,7 +32,9 @@ const TrainingInterface = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [showDailyComplete, setShowDailyComplete] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [dailyProgress, setDailyProgress] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(1);
 
   // Carregar progresso salvo
   useEffect(() => {
@@ -41,12 +44,19 @@ const TrainingInterface = () => {
       const today = new Date().toDateString();
       if (progress.date === today) {
         setDailyProgress(progress.completed || 0);
+        setCurrentStreak(Math.floor((progress.completed || 0) / 20) + 1);
         if (progress.currentSession) {
           setIsTraining(true);
           setCurrentQuestion(progress.currentSession.currentQuestion || 0);
           setAnswers(progress.currentSession.answers || []);
         }
       }
+    }
+    
+    // Verificar se o diagnóstico foi concluído para definir streak inicial
+    const diagnosticCompleted = localStorage.getItem('diagnostic_completed');
+    if (diagnosticCompleted === 'true' && currentStreak === 0) {
+      setCurrentStreak(1);
     }
   }, []);
 
@@ -92,7 +102,6 @@ const TrainingInterface = () => {
       options: ["0", "1", "√2/2", "√3/2"],
       correctAnswer: 1
     },
-    // Adicionar mais 15 questões para completar 20
     {
       id: 6,
       topic: "Logaritmo",
@@ -250,6 +259,19 @@ const TrainingInterface = () => {
       const newDailyProgress = dailyProgress + 20;
       setDailyProgress(newDailyProgress);
       
+      // Salvar histórico de respostas para revisão
+      const sessionData = {
+        answers: newAnswers,
+        questions: trainingQuestions,
+        completedAt: new Date().toISOString(),
+        type: 'training'
+      };
+      
+      const trainingHistory = localStorage.getItem('training_history');
+      const history = trainingHistory ? JSON.parse(trainingHistory) : [];
+      history.push(sessionData);
+      localStorage.setItem('training_history', JSON.stringify(history));
+      
       const finalProgress = {
         date: new Date().toDateString(),
         completed: newDailyProgress,
@@ -257,7 +279,8 @@ const TrainingInterface = () => {
       };
       localStorage.setItem('training_progress', JSON.stringify(finalProgress));
       
-      setShowDailyComplete(true);
+      setCurrentStreak(Math.floor(newDailyProgress / 20) + 1);
+      setShowResults(true);
     }
   };
 
@@ -283,6 +306,18 @@ const TrainingInterface = () => {
       const newDailyProgress = dailyProgress + 20;
       setDailyProgress(newDailyProgress);
       
+      const sessionData = {
+        answers: newAnswers,
+        questions: trainingQuestions,
+        completedAt: new Date().toISOString(),
+        type: 'training'
+      };
+      
+      const trainingHistory = localStorage.getItem('training_history');
+      const history = trainingHistory ? JSON.parse(trainingHistory) : [];
+      history.push(sessionData);
+      localStorage.setItem('training_history', JSON.stringify(history));
+      
       const finalProgress = {
         date: new Date().toDateString(),
         completed: newDailyProgress,
@@ -290,8 +325,14 @@ const TrainingInterface = () => {
       };
       localStorage.setItem('training_progress', JSON.stringify(finalProgress));
       
-      setShowDailyComplete(true);
+      setCurrentStreak(Math.floor(newDailyProgress / 20) + 1);
+      setShowResults(true);
     }
+  };
+
+  const handleResultsComplete = () => {
+    setShowResults(false);
+    setShowDailyComplete(true);
   };
 
   const handleContinueTraining = () => {
@@ -303,6 +344,18 @@ const TrainingInterface = () => {
     setShowDailyComplete(false);
     setIsTraining(false);
   };
+
+  if (showResults) {
+    return (
+      <ResultsReview 
+        answers={answers}
+        questions={trainingQuestions}
+        onComplete={handleResultsComplete}
+        title="Simulado Concluído!"
+        type="training"
+      />
+    );
+  }
 
   if (showDailyComplete) {
     return (
@@ -373,8 +426,8 @@ const TrainingInterface = () => {
                   <Trophy className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
-                  <div className="font-semibold text-yellow-800">Sequência</div>
-                  <div className="text-sm text-yellow-600">3 dias</div>
+                  <div className="font-semibold text-yellow-800">Meta Atual</div>
+                  <div className="text-sm text-yellow-600">{currentStreak}</div>
                 </div>
               </div>
             </div>
