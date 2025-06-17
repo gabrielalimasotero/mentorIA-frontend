@@ -1,13 +1,44 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from 'react';
+import LoginPage from '../components/LoginPage';
+import Dashboard from '../components/Dashboard';
 
 const Index = () => {
+  const [user, setUser] = useState<string | null>(localStorage.getItem('enem_user'));
+  const [hasCompletedDiagnostic, setHasCompletedDiagnostic] = useState<boolean>(
+    localStorage.getItem('diagnostic_completed') === 'true'
+  );
+
+  const handleLogin = (username: string) => {
+    localStorage.setItem('enem_user', username);
+    setUser(username);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('enem_user');
+    localStorage.removeItem('diagnostic_completed');
+    localStorage.removeItem('diagnostic_progress');
+    localStorage.removeItem('training_progress');
+    setUser(null);
+    setHasCompletedDiagnostic(false);
+  };
+
+  const handleDiagnosticComplete = () => {
+    localStorage.setItem('diagnostic_completed', 'true');
+    setHasCompletedDiagnostic(true);
+  };
+
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <Dashboard 
+      user={user}
+      hasCompletedDiagnostic={hasCompletedDiagnostic}
+      onLogout={handleLogout}
+      onDiagnosticComplete={handleDiagnosticComplete}
+    />
   );
 };
 
