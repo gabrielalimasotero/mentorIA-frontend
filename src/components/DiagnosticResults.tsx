@@ -65,6 +65,13 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
     onComplete();
   };
 
+  const handleCompleteWithGoal = () => {
+    // Definir meta inicial como 1 após o diagnóstico
+    const currentGoals = parseInt(localStorage.getItem('user_goals') || '0');
+    localStorage.setItem('user_goals', (currentGoals + 1).toString());
+    onComplete();
+  };
+
   if (showReview) {
     return (
       <ResultsReview 
@@ -152,7 +159,7 @@ const DiagnosticResults = ({ answers, questions, onComplete }: DiagnosticResults
         </Button>
         
         <Button 
-          onClick={onComplete}
+          onClick={handleCompleteWithGoal}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg font-semibold"
         >
           <BookOpen className="w-5 h-5 mr-2" />

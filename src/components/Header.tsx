@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { LogOut, ArrowLeft, User } from 'lucide-react';
+import { LogOut, ArrowLeft, User, BookOpen } from 'lucide-react';
 import UserProfile from './UserProfile';
 import { useState } from 'react';
 
@@ -30,9 +30,14 @@ const Header = ({ user, onLogout, currentView, onBackToTrails }: HeaderProps) =>
                 Voltar às Trilhas
               </Button>
             )}
-            <h1 className="text-2xl font-bold text-blue-900">
-              Mentor<span className="text-blue-600">IA</span>
-            </h1>
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-blue-900">
+                Mentor<span className="text-blue-600">IA</span>
+              </h1>
+            </div>
           </div>
           
           <div className="flex items-center gap-4">
