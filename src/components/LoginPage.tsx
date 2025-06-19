@@ -31,16 +31,16 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
 
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="text-center pb-8">
-            <div className="w-16 h-16 mx-auto mb-4 bg-[#084d6e] rounded-2xl flex items-center justify-center">
-              <Brain className="w-8 h-8 text-white" strokeWidth={1.5} />
+            <div className="w-16 h-16 mx-auto mb-4 bg-blue-700 rounded-2xl flex items-center justify-center">
+              <Brain className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-3xl font-bold text-[#084d6e] mb-2">
-              Mentor<span className="text-[#0a5a7a]">IA</span>
+            <CardTitle className="text-3xl font-bold text-blue-800 mb-2">
+              Mentor<span className="text-blue-700">IA</span>
             </CardTitle>
-            <p className="text-gray-600">Recuperar senha</p>
+            <p className="text-blue-600">Recuperar senha</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -51,7 +51,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                   <Input
                     type="email"
                     placeholder="seu@email.com"
-                    className="pl-10 border-gray-300 focus:border-[#084d6e]"
+                    className="pl-10 border-gray-300 focus:border-blue-500"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     required
@@ -61,7 +61,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
 
               <Button 
                 type="submit" 
-                className="w-full bg-[#084d6e] hover:bg-[#073f56] text-white py-3"
+                className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3"
               >
                 Enviar link de recuperação
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -71,7 +71,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(false)}
-                  className="text-[#084d6e] hover:text-[#073f56] font-medium"
+                  className="text-blue-700 hover:text-blue-800 font-medium"
                 >
                   Voltar ao login
                 </button>
@@ -84,16 +84,16 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center pb-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-[#084d6e] rounded-2xl flex items-center justify-center">
-            <Brain className="w-8 h-8 text-white" strokeWidth={1.5} />
+          <div className="w-16 h-16 mx-auto mb-4 bg-blue-700 rounded-2xl flex items-center justify-center">
+            <Brain className="w-8 h-8 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold text-[#084d6e] mb-2">
-            Mentor<span className="text-[#0a5a7a]">IA</span>
+          <CardTitle className="text-3xl font-bold text-blue-800 mb-2">
+            Mentor<span className="text-blue-700">IA</span>
           </CardTitle>
-          <p className="text-gray-600">
+          <p className="text-blue-600">
             {isSignUp ? 'Crie sua conta e comece a estudar' : 'Entre em sua conta para continuar'}
           </p>
         </CardHeader>
@@ -107,7 +107,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                   <Input
                     type="text"
                     placeholder="Seu nome completo"
-                    className="pl-10 border-gray-300 focus:border-[#084d6e]"
+                    className="pl-10 border-gray-300 focus:border-blue-500"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     required
@@ -123,7 +123,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                 <Input
                   type="email"
                   placeholder="seu@email.com"
-                  className="pl-10 border-gray-300 focus:border-[#084d6e]"
+                  className="pl-10 border-gray-300 focus:border-blue-500"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   required
@@ -138,7 +138,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                 <Input
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 border-gray-300 focus:border-[#084d6e]"
+                  className="pl-10 border-gray-300 focus:border-blue-500"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   required
@@ -154,7 +154,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    className="pl-10 border-gray-300 focus:border-[#084d6e]"
+                    className="pl-10 border-gray-300 focus:border-blue-500"
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     required
@@ -165,7 +165,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
 
             <Button 
               type="submit" 
-              className="w-full bg-[#084d6e] hover:bg-[#073f56] text-white py-3"
+              className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3"
             >
               {isSignUp ? 'Criar conta' : 'Entrar'}
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -176,7 +176,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="text-[#084d6e] hover:text-[#073f56] text-sm"
+                  className="text-blue-700 hover:text-blue-800 text-sm"
                 >
                   Esqueci minha senha
                 </button>
@@ -207,6 +207,18 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                 </svg>
                 Continuar com Google
               </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-gray-300 hover:bg-gray-50"
+                onClick={() => onLogin('Usuário Facebook')}
+              >
+                <svg className="w-4 h-4 mr-2" fill="#1877F2" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Continuar com Facebook
+              </Button>
             </div>
 
             <div className="text-center">
@@ -216,7 +228,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="ml-1 text-[#084d6e] hover:text-[#073f56] font-medium"
+                className="ml-1 text-blue-700 hover:text-blue-800 font-medium"
               >
                 {isSignUp ? 'Entrar' : 'Cadastre-se'}
               </button>
