@@ -33,7 +33,8 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Se o erro for 401 (não autorizado) e não for uma tentativa de refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const token = localStorage.getItem('token');
+    if (error.response?.status === 401 && !originalRequest._retry && token) {
       originalRequest._retry = true;
 
       try {
