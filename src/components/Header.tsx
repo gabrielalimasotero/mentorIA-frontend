@@ -1,7 +1,7 @@
-
 import { Button } from '@/components/ui/button';
-import { LogOut, ArrowLeft, User, Brain } from 'lucide-react';
-import UserProfile from './UserProfile';
+import { LogOut, ArrowLeft, User, Brain, BarChart3 } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 
 interface HeaderProps {
@@ -12,7 +12,21 @@ interface HeaderProps {
 }
 
 const Header = ({ user, onLogout, currentView, onBackToTrails }: HeaderProps) => {
-  const [showProfile, setShowProfile] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+
+  // Mock de estatísticas (pode ser substituído por dados reais/localStorage futuramente)
+  const stats = {
+    goalsAchieved: 3,
+    totalQuestions: 120,
+    totalCorrect: 90,
+    topicStats: {
+      'Álgebra': { correct: 30, total: 40 },
+      'Geometria': { correct: 25, total: 30 },
+      'Estatística': { correct: 20, total: 25 },
+      'Funções': { correct: 15, total: 25 },
+    },
+  };
+  const overallPercentage = stats.totalQuestions > 0 ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100) : 0;
 
   return (
     <>
@@ -39,15 +53,75 @@ const Header = ({ user, onLogout, currentView, onBackToTrails }: HeaderProps) =>
               </h1>
             </div>
           </div>
-          
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowProfile(true)}
+            <Dialog open={showStats} onOpenChange={setShowStats}>
+              <DialogTrigger asChild>
+                <button
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                  title="Estatísticas"
+                >
+                  <BarChart3 className="w-4 h-4 text-blue-700" />
+                  <span className="text-blue-800 font-medium">Estatísticas</span>
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Painel de Estatísticas</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-900">{stats.goalsAchieved}</div>
+                    <div className="text-sm text-blue-600">Metas Batidas</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-green-900">{stats.totalQuestions}</div>
+                    <div className="text-sm text-green-600">Questões Resolvidas</div>
+                  </div>
+                  <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-900">{stats.totalCorrect}</div>
+                    <div className="text-sm text-yellow-600">Total de Acertos</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-900">{overallPercentage}%</div>
+                    <div className="text-sm text-purple-600">Aproveitamento</div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-900 mb-4">Rendimento por Tópico</h3>
+                  <div className="space-y-4">
+                    {Object.entries(stats.topicStats).map(([topic, data]) => {
+                      const percentage = Math.round((data.correct / data.total) * 100);
+                      return (
+                        <div key={topic} className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-gray-800">{topic}</h4>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600">
+                                {data.correct}/{data.total}
+                              </span>
+                              <span className={`text-xs px-2 py-1 rounded ${percentage >= 80 ? 'bg-green-100 text-green-800' : percentage >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{percentage}%</span>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className={`h-2 rounded-full ${percentage >= 80 ? 'bg-green-500' : percentage >= 60 ? 'bg-yellow-400' : 'bg-red-400'}`} style={{ width: `${percentage}%` }} />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {data.total} questão{data.total > 1 ? 'ões' : ''} respondida{data.total > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Link
+              to="/perfil"
               className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
             >
               <User className="w-4 h-4 text-blue-700" />
-              <span className="text-blue-800 font-medium">{user}</span>
-            </button>
+              <span className="text-blue-800 font-medium">Perfil</span>
+            </Link>
             <Button
               variant="outline"
               size="sm"
@@ -60,12 +134,6 @@ const Header = ({ user, onLogout, currentView, onBackToTrails }: HeaderProps) =>
           </div>
         </div>
       </header>
-
-      <UserProfile 
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
-        user={user}
-      />
     </>
   );
 };
