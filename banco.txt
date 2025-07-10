@@ -1,0 +1,112 @@
+-- 1. Criação da tabela 'users' (não depende de outras tabelas aqui)
+CREATE TABLE public.users (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    name text NOT NULL,
+    email text NOT NULL,
+    password_hash text NOT NULL,
+    created_at timestamp with time zone NULL DEFAULT now(),
+    profile_data jsonb NULL,
+    CONSTRAINT users_pkey PRIMARY KEY (id),
+    CONSTRAINT users_email_key UNIQUE (email)
+) TABLESPACE pg_default;V
+
+-- 2. Criação da tabela 'competencies' (não depende de outras tabelas aqui)
+CREATE TABLE public.competencies (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    name text NOT NULL,
+    description text NULL,
+    CONSTRAINT competencies_pkey PRIMARY KEY (id),
+    CONSTRAINT competencies_name_key UNIQUE (name)
+) TABLESPACE pg_default;
+
+-- 3. Criação da tabela 'questions' (não depende de outras tabelas aqui)
+CREATE TABLE public.questions (
+    id text NOT NULL,
+    title text NOT NULL,
+    year integer NOT NULL,
+    question_index integer NOT NULL,
+    language text NOT NULL,
+    field text NOT NULL,
+    problem_statement text NOT NULL,
+    files jsonb NULL DEFAULT '[]'::jsonb,
+    topic_name text NULL,
+    subtopic_name text NULL,
+    explanation text NULL,
+    CONSTRAINT questions_pkey PRIMARY KEY (id)
+) TABLESPACE pg_default;
+
+-- 4. Criação da tabela 'alternatives' (depende de 'questions')
+CREATE TABLE public.alternatives (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    question_id text NOT NULL,
+    letter character(1) NOT NULL,
+    text text NOT NULL,
+    file text NULL,
+    is_correct boolean NOT NULL,
+    CONSTRAINT alternatives_pkey PRIMARY KEY (id),
+    CONSTRAINT alternatives_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+-- 5. Criação da tabela 'study_tracks' (depende de 'users')
+CREATE TABLE public.study_tracks (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL,
+    name text NOT NULL,
+    description text NULL,
+    created_at timestamp with time zone NULL DEFAULT now(),
+    is_active boolean NULL DEFAULT true,
+    CONSTRAINT study_tracks_pkey PRIMARY KEY (id),
+    CONSTRAINT study_tracks_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+-- 6. Criação da tabela 'question_competencies' (depende de 'competencies' e 'questions')
+CREATE TABLE public.question_competencies (
+    question_id text NOT NULL,
+    competency_id uuid NOT NULL,
+    CONSTRAINT question_competencies_pkey PRIMARY KEY (question_id, competency_id),
+    CONSTRAINT question_competencies_competency_id_fkey FOREIGN KEY (competency_id) REFERENCES competencies (id) ON DELETE CASCADE,
+    CONSTRAINT question_competencies_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+-- 7. Criação da tabela 'track_questions' (depende de 'study_tracks' e 'questions')
+CREATE TABLE public.track_questions (
+    track_id uuid NOT NULL,
+    question_id text NOT NULL,
+    "order" integer NOT NULL,
+    is_completed boolean NULL DEFAULT false,
+    CONSTRAINT track_questions_pkey PRIMARY KEY (track_id, question_id),
+    CONSTRAINT track_questions_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE,
+    CONSTRAINT track_questions_track_id_fkey FOREIGN KEY (track_id) REFERENCES study_tracks (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+-- 8. Criação da tabela 'user_answers' (depende de 'users', 'questions' e 'alternatives')
+CREATE TABLE public.user_answers (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL,
+    question_id text NOT NULL,
+    selected_alternative_id uuid NULL,
+    is_correct boolean NOT NULL,
+    answered_at timestamp with time zone NULL DEFAULT now(),
+    time_spent_seconds integer NULL,
+    CONSTRAINT user_answers_pkey PRIMARY KEY (id),
+    CONSTRAINT user_answers_question_id_fkey FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE,
+    CONSTRAINT user_answers_selected_alternative_id_fkey FOREIGN KEY (selected_alternative_id) REFERENCES alternatives (id),
+    CONSTRAINT user_answers_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+-- 9. Criação da tabela 'user_competencies' (depende de 'users' e 'competencies')
+CREATE TABLE public.user_competencies (
+    user_id uuid NOT NULL,
+    competency_id uuid NOT NULL,
+    level integer NULL DEFAULT 0,
+    last_evaluated_at timestamp with time zone NULL,
+    CONSTRAINT user_competencies_pkey PRIMARY KEY (user_id, competency_id),
+    CONSTRAINT user_competencies_competency_id_fkey FOREIGN KEY (competency_id) REFERENCES competencies (id) ON DELETE CASCADE,
+    CONSTRAINT user_competencies_user_id_fkey FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+) TABLESPACE pg_default;
+
+-- Criação de índices (podem ser criados após as tabelas)
+CREATE INDEX IF NOT EXISTS question_competencies_competency_id_idx ON public.question_competencies USING btree (competency_id) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS user_answers_question_id_idx ON public.user_answers USING btree (question_id) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS user_answers_user_id_idx ON public.user_answers USING btree (user_id) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS user_competencies_user_id_idx ON public.user_competencies USING btree (user_id) TABLESPACE pg_default;

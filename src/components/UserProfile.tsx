@@ -1,194 +1,111 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, Mail, Calendar, Building } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Trophy, Target, CheckCircle, BarChart3 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+const UserProfile = () => {
+  const { user } = useAuth();
 
-interface UserProfileProps {
-  isOpen: boolean;
-  onClose: () => void;
-  user: string;
-}
-
-interface UserStats {
-  goalsAchieved: number;
-  totalQuestions: number;
-  totalCorrect: number;
-  topicStats: Record<string, { correct: number; total: number }>;
-}
-
-const UserProfile = ({ isOpen, onClose, user }: UserProfileProps) => {
-  const [stats, setStats] = useState<UserStats>({
-    goalsAchieved: 0,
-    totalQuestions: 0,
-    totalCorrect: 0,
-    topicStats: {}
-  });
-
-  useEffect(() => {
-    if (isOpen) {
-      loadUserStats();
-    }
-  }, [isOpen]);
-
-  const loadUserStats = () => {
-    // Carregar estatísticas do diagnóstico
-    const diagnosticData = localStorage.getItem('diagnostic_progress');
-    const trainingData = localStorage.getItem('training_progress');
-    
-    let totalQuestions = 0;
-    let totalCorrect = 0;
-    let topicStats: Record<string, { correct: number; total: number }> = {};
-    let goalsAchieved = 0;
-
-    // Processar dados do diagnóstico
-    if (diagnosticData) {
-      const diagnostic = JSON.parse(diagnosticData);
-      if (diagnostic.questions && diagnostic.answers) {
-        diagnostic.questions.forEach((question: any, index: number) => {
-          const topic = question.topic;
-          const isCorrect = diagnostic.answers[index] === question.correctAnswer;
-          
-          if (!topicStats[topic]) {
-            topicStats[topic] = { correct: 0, total: 0 };
-          }
-          
-          topicStats[topic].total++;
-          totalQuestions++;
-          
-          if (isCorrect) {
-            topicStats[topic].correct++;
-            totalCorrect++;
-          }
-        });
-      }
-    }
-
-    // Processar dados do treinamento
-    if (trainingData) {
-      const training = JSON.parse(trainingData);
-      goalsAchieved = Math.floor((training.completed || 0) / 20);
-      
-      // Adicionar estatísticas das sessões de treinamento se houver histórico
-      const trainingHistory = localStorage.getItem('training_history');
-      if (trainingHistory) {
-        const history = JSON.parse(trainingHistory);
-        history.forEach((session: any) => {
-          session.questions.forEach((question: any, index: number) => {
-            const topic = question.topic;
-            const isCorrect = session.answers[index] === question.correctAnswer;
-            
-            if (!topicStats[topic]) {
-              topicStats[topic] = { correct: 0, total: 0 };
-            }
-            
-            topicStats[topic].total++;
-            totalQuestions++;
-            
-            if (isCorrect) {
-              topicStats[topic].correct++;
-              totalCorrect++;
-            }
-          });
-        });
-      }
-    }
-
-    setStats({
-      goalsAchieved,
-      totalQuestions,
-      totalCorrect,
-      topicStats
-    });
-  };
-
-  const overallPercentage = stats.totalQuestions > 0 ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100) : 0;
+  if (!user) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl text-blue-900 flex items-center gap-2">
-            <BarChart3 className="w-6 h-6" />
-            Perfil - {user}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6 pt-4">
-          {/* Estatísticas Gerais */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4 text-center">
-              <Trophy className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-blue-900">{stats.goalsAchieved}</div>
-              <div className="text-sm text-blue-600">Metas Batidas</div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <div className="max-w-2xl mx-auto p-6">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-blue-800">
+              Perfil do Usuário
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Avatar Section */}
+            <div className="flex flex-col items-center space-y-4">
+              <Avatar className="w-24 h-24">
+                <AvatarFallback className="text-2xl bg-blue-100 text-blue-600">
+                  {user.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <p className="text-sm text-gray-600 text-center">
+                Foto do perfil
+              </p>
             </div>
 
-            <div className="bg-green-50 rounded-lg p-4 text-center">
-              <Target className="w-8 h-8 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-green-900">{stats.totalQuestions}</div>
-              <div className="text-sm text-green-600">Questões Resolvidas</div>
-            </div>
-
-            <div className="bg-yellow-50 rounded-lg p-4 text-center">
-              <CheckCircle className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-yellow-900">{stats.totalCorrect}</div>
-              <div className="text-sm text-yellow-600">Total de Acertos</div>
-            </div>
-
-            <div className="bg-purple-50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-purple-900">{overallPercentage}%</div>
-              <div className="text-sm text-purple-600">Aproveitamento</div>
-            </div>
-          </div>
-
-          {/* Rendimento por Tópico */}
-          <div>
-            <h3 className="text-lg font-semibold text-blue-900 mb-4">Rendimento por Tópico</h3>
+            {/* Profile Information */}
             <div className="space-y-4">
-              {Object.entries(stats.topicStats).length > 0 ? (
-                Object.entries(stats.topicStats).map(([topic, data]) => {
-                  const percentage = Math.round((data.correct / data.total) * 100);
-                  
-                  return (
-                    <div key={topic} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-800">{topic}</h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">
-                            {data.correct}/{data.total}
-                          </span>
-                          <Badge 
-                            className={`text-xs ${
-                              percentage >= 80 ? 'bg-green-100 text-green-800' :
-                              percentage >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {percentage}%
-                          </Badge>
-                        </div>
-                      </div>
-                      <Progress value={percentage} className="h-2" />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {data.total} questão{data.total > 1 ? 'ões' : ''} respondida{data.total > 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Nenhuma estatística disponível ainda.</p>
-                  <p className="text-sm">Complete o diagnóstico para ver seu progresso!</p>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome completo</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="name"
+                    value={user.name}
+                    disabled
+                    className="pl-10 border-gray-300 bg-gray-50"
+                  />
                 </div>
-              )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="email"
+                    value={user.email}
+                    disabled
+                    className="pl-10 border-gray-300 bg-gray-50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="birth-date">Data de nascimento</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="birth-date"
+                    value={new Date(user.birthDate).toLocaleDateString('pt-BR')}
+                    disabled
+                    className="pl-10 border-gray-300 bg-gray-50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="institution">Instituição</Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    id="institution"
+                    value={user.institution}
+                    disabled
+                    className="pl-10 border-gray-300 bg-gray-50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Membro desde</Label>
+                <Input
+                  value={new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                  disabled
+                  className="border-gray-300 bg-gray-50"
+                />
+              </div>
             </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+            <div className="text-center pt-4">
+              <p className="text-sm text-gray-500">
+                Para alterar suas informações, entre em contato com o suporte.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
-export default UserProfile;
+export default UserProfile; 
