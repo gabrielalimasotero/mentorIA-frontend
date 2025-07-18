@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/components/LoginPage";
 import Dashboard from "@/components/Dashboard";
 import NotFound from "./pages/NotFound";
+import ProfilePage from "./pages/ProfilePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,18 +27,24 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route 
-              path="/" 
-              element={<LoginPage />} 
-            />
-            <Route 
-              path="/dashboard" 
+            <Route path="/" element={<LoginPage />} />
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute redirectTo="/">
                   <Dashboard />
                 </ProtectedRoute>
-              } 
+              }
             />
+            <Route
+              path="/perfil"
+              element={
+                <ProtectedRoute redirectTo="/">
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Outras rotas customizadas podem ser adicionadas aqui */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

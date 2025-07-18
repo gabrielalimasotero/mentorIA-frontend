@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User, Mail, Calendar, Building } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -24,7 +24,7 @@ const UserProfile = () => {
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="w-24 h-24">
                 <AvatarFallback className="text-2xl bg-blue-100 text-blue-600">
-                  {user.name.charAt(0).toUpperCase()}
+                  {user.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <p className="text-sm text-gray-600 text-center">
@@ -40,7 +40,7 @@ const UserProfile = () => {
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="name"
-                    value={user.name}
+                    value={user.name || ''}
                     disabled
                     className="pl-10 border-gray-300 bg-gray-50"
                   />
@@ -53,7 +53,7 @@ const UserProfile = () => {
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="email"
-                    value={user.email}
+                    value={user.email || ''}
                     disabled
                     className="pl-10 border-gray-300 bg-gray-50"
                   />
@@ -66,7 +66,7 @@ const UserProfile = () => {
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="birth-date"
-                    value={new Date(user.birthDate).toLocaleDateString('pt-BR')}
+                    value={user.birthDate ? new Date(user.birthDate).toLocaleDateString('pt-BR') : ''}
                     disabled
                     className="pl-10 border-gray-300 bg-gray-50"
                   />
@@ -79,7 +79,7 @@ const UserProfile = () => {
                   <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="institution"
-                    value={user.institution}
+                    value={user.institution || ''}
                     disabled
                     className="pl-10 border-gray-300 bg-gray-50"
                   />
@@ -89,7 +89,7 @@ const UserProfile = () => {
               <div className="space-y-2">
                 <Label>Membro desde</Label>
                 <Input
-                  value={new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                  value={user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : ''}
                   disabled
                   className="border-gray-300 bg-gray-50"
                 />
