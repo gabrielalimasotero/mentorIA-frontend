@@ -1,21 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const mockUser = {
-    name: 'João da Silva',
-    email: 'joao.silva@email.com',
-    birth_date: '1995-05-20',
-    institution: 'Universidade Federal',
-    avatar: '',
-};
+import axios from 'axios';
 
 const ProfilePage = () => {
-    const [user, setUser] = useState(mockUser);
+    const [user, setUser] = useState<any>(null);
     const [editMode, setEditMode] = useState(false);
-    const [form, setForm] = useState(user);
-    const [avatarPreview, setAvatarPreview] = useState(user.avatar);
+    const [form, setForm] = useState<any>({});
+    const [avatarPreview, setAvatarPreview] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+
+    // Buscar perfil real ao montar
+    useEffect(() => {
+        setLoading(true);
+        axios.get(`${import.meta.env.VITE_API_URL}/me`, { withCredentials: true })
+            .then(res => {
+                setUser(res.data);
+                setForm(res.data);
+                setAvatarPreview(res.data.avatar || '');
+                setLoading(false);
+            })
+            .catch(() => {
+                setError('Erro ao carregar perfil.');
+                setLoading(false);
+            });
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -36,14 +47,41 @@ const ProfilePage = () => {
     const handleEdit = () => setEditMode(true);
     const handleCancel = () => {
         setForm(user);
-        setAvatarPreview(user.avatar);
+        setAvatarPreview(user?.avatar || '');
         setEditMode(false);
     };
-    const handleSave = () => {
-        setUser(form);
-        setEditMode(false);
-        // Aqui futuramente pode ser feita a integração com backend
+    const handleSave = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await axios.put(
+                `${import.meta.env.VITE_API_URL}/profile`,
+                {
+                    name: form.name,
+                    birth_date: form.birth_date,
+                    institution: form.institution,
+                },
+                { withCredentials: true }
+            );
+            setUser(res.data);
+            setForm(res.data);
+            setEditMode(false);
+        } catch (err: any) {
+            setError('Erro ao salvar perfil.');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    if (loading) {
+        return <div className="max-w-md mx-auto mt-10 p-6 rounded shadow bg-white">Carregando perfil...</div>;
+    }
+    if (error) {
+        return <div className="max-w-md mx-auto mt-10 p-6 rounded shadow bg-white text-red-600">{error}</div>;
+    }
+    if (!user) {
+        return <div className="max-w-md mx-auto mt-10 p-6 rounded shadow bg-white">Perfil não encontrado.</div>;
+    }
 
     return (
         <div className="max-w-md mx-auto mt-10 p-6 rounded shadow" style={{ backgroundColor: '#3B82F630' }}>
@@ -105,10 +143,9 @@ const ProfilePage = () => {
                     <input
                         type="email"
                         name="email"
-                        value={editMode ? form.email : user.email}
-                        onChange={handleChange}
-                        disabled={!editMode}
-                        className="mt-1 block w-full border rounded px-3 py-2"
+                        value={user.email}
+                        disabled
+                        className="mt-1 block w-full border rounded px-3 py-2 bg-gray-100"
                     />
                 </div>
                 <div>
