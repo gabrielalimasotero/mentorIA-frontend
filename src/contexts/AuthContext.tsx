@@ -13,6 +13,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, birthDate: string, institution: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
+  refetchUser: () => Promise<void>; // ✅ novo
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
