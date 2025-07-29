@@ -58,13 +58,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     enabled: isAuthenticated,
     retry: false, // Não tentar novamente em caso de erro
     staleTime: 5 * 60 * 1000, // 5 minutos
-    onError: (error: any) => {
-      // Só fazer logout se o erro for de autenticação
-      if (error.response?.status === 401) {
-        console.error('Token inválido ou expirado, fazendo logout');
-        handleLogout();
-      }
-    }
   });
 
   // Função centralizada para fazer logout
@@ -273,6 +266,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await forgotPasswordMutation.mutateAsync(email);
   };
 
+  const refetchUser = async () => {
+    try {
+      // Invalida o cache primeiro
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      // Força uma nova busca
+      await refetch();
+      
+      // Busca dados diretamente da API e atualiza o cache
+      const freshUserData = await authService.getCurrentUser();
+      queryClient.setQueryData(['user'], freshUserData);
+      
+      // Atualiza localStorage também
+      userUtils.saveUser(freshUserData);
+    } catch (error) {
+      console.error('Erro ao atualizar dados do usuário:', error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -282,6 +293,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     forgotPassword,
+    refetchUser, // Adicionado ao contexto
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -65,13 +65,15 @@ export const authService = {
   // Buscar dados do usuário atual
   async getCurrentUser(): Promise<User> {
     const response = await api.get<ApiResponse<User>>('/auth/me');
-    return response.data.user!;
+    // O backend retorna o perfil diretamente, não dentro de um objeto user
+    return response.data as User;
   },
 
   // Atualizar perfil do usuário
   async updateProfile(data: Partial<User>): Promise<User> {
     const response = await api.put<ApiResponse<User>>('/auth/profile', data);
-    return response.data.data!;
+    // O backend retorna o perfil diretamente, não dentro de um objeto data
+    return response.data as User;
   },
 
   // Upload de avatar
@@ -85,7 +87,8 @@ export const authService = {
       },
     });
     
-    return response.data.data!;
+    // O backend retorna o objeto diretamente, não dentro de um objeto data
+    return response.data as { avatar: string };
   },
 
   // Refresh token

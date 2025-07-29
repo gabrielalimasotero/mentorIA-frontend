@@ -3,6 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { authService } from '@/lib/auth';
+import { userUtils } from '@/lib/auth';
 
 const formatDateForDisplay = (dateString) => {
   if (!dateString) return '';
@@ -26,7 +28,7 @@ const formatDateForDisplay = (dateString) => {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, refetchUser } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient(); // Para invalidar cache do React Query
 
@@ -34,7 +36,6 @@ const ProfilePage = () => {
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
-    birth_date: '',
     institution: '',
     avatar: ''
   });
@@ -51,12 +52,11 @@ const ProfilePage = () => {
       const userData = {
         name: user.name || '',
         email: user.email || '',
-        birth_date: user.birth_date ? user.birth_date.split('T')[0] : '', // Remove hora se vier do backend
         institution: user.institution || '',
-        avatar: user.avatar || ''
+        avatar: (user as any).avatar || ''
       };
       setProfileData(userData);
-      setAvatarPreview(user.avatar || '');
+      setAvatarPreview((user as any).avatar || '');
     }
   }, [user]);
 
@@ -69,18 +69,21 @@ const ProfilePage = () => {
   };
 
   // Processa upload de imagem
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
-    // Converte para base64
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = e.target.result;
-      setAvatarPreview(base64);
-      handleInputChange('avatar', base64);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Faz upload para o backend e pega a URL/caminho
+      const result = await authService.uploadAvatar(file);
+      if (result && result.avatar) {
+        setAvatarPreview(result.avatar); // Mostra preview
+        handleInputChange('avatar', result.avatar); // Salva caminho/URL no estado
+      }
+    } catch (err) {
+      alert('Erro ao fazer upload da imagem.');
+      setAvatarPreview('');
+      handleInputChange('avatar', '');
+    }
   };
 
   // Remove a imagem
@@ -97,12 +100,11 @@ const ProfilePage = () => {
       const originalData = {
         name: user.name || '',
         email: user.email || '',
-        birth_date: formatDateForDisplay(user.birth_date), // ✅ USA FUNÇÃO AUXILIAR
         institution: user.institution || '',
-        avatar: user.avatar || ''
+        avatar: (user as any).avatar || ''
       };
       setProfileData(originalData);
-      setAvatarPreview(user.avatar || '');
+      setAvatarPreview((user as any).avatar || '');
     }
     setIsEditing(false);
   };
@@ -117,6 +119,12 @@ const ProfilePage = () => {
         throw new Error('Token não encontrado');
       }
 
+      const requestBody = {
+        name: profileData.name,
+        institution: profileData.institution,
+        avatar: profileData.avatar
+      };
+
       console.log('=== DEBUG SAVE PROFILE ===');
       console.log('Token existe:', !!token);
       console.log('API_BASE_URL:', API_BASE_URL);
@@ -124,17 +132,9 @@ const ProfilePage = () => {
       console.log('ANTES - Nome atual no formulário:', profileData.name);
       console.log('Dados que serão enviados:', {
         name: profileData.name,
-        birth_date: profileData.birth_date,
         institution: profileData.institution,
         avatar: profileData.avatar ? 'base64 image data' : 'sem avatar'
       });
-
-      const requestBody = {
-        name: profileData.name,
-        birth_date: profileData.birth_date,
-        institution: profileData.institution,
-        avatar: profileData.avatar
-      };
 
       console.log('Fazendo requisição...');
 
@@ -166,7 +166,6 @@ const ProfilePage = () => {
         const newData = {
           name: updatedData.name || '',
           email: updatedData.email || '',
-          birth_date: formatDateForDisplay(updatedData.birth_date), // ✅ USA FUNÇÃO AUXILIAR
           institution: updatedData.institution || '',
           avatar: updatedData.avatar || ''
         };
@@ -200,15 +199,21 @@ const ProfilePage = () => {
           }
           
           // Se o contexto tem uma função para atualizar os dados, usa ela
-          if (typeof refreshUser === 'function') {
-            await refreshUser();
-          }
+          // if (typeof refreshUser === 'function') {
+          //   await refreshUser();
+          // }
         }
       } catch (refreshError) {
         console.log('Erro ao buscar dados frescos:', refreshError);
       }
 
       alert('Perfil atualizado com sucesso!');
+      if (refetchUser) {
+        await refetchUser();
+        // Atualizar localStorage com os dados novos
+        const freshUserData = await authService.getCurrentUser();
+        userUtils.saveUser(freshUserData);
+      }
       setIsEditing(false);
 
     } catch (error) {
@@ -330,22 +335,6 @@ const ProfilePage = () => {
           <p className="text-xs text-gray-500 mt-1">
             Email não pode ser alterado
           </p>
-        </div>
-
-        {/* Data de nascimento */}
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700">
-            Data de Nascimento
-          </label>
-          <input
-            type="date"
-            value={profileData.birth_date}
-            onChange={(e) => handleInputChange('birth_date', e.target.value)}
-            disabled={!isEditing}
-            className={`w-full px-3 py-2 border rounded ${
-              isEditing ? 'border-gray-300' : 'border-gray-200 bg-gray-50'
-            }`}
-          />
         </div>
 
         {/* Instituição */}
