@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubjectTrails from './SubjectTrails';
-import DiagnosticTest from './DiagnosticTest';
+import EnhancedDiagnosticTest from './EnhancedDiagnosticTest';
 import TrainingInterface from './TrainingInterface';
 import Header from './Header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -108,7 +108,7 @@ const Dashboard = () => {
         )}
         
         {currentView === 'diagnostic' && (
-          <DiagnosticTest onComplete={handleDiagnosticComplete} />
+          <EnhancedDiagnosticTest onComplete={handleDiagnosticComplete} />
         )}
         
         {currentView === 'training' && (

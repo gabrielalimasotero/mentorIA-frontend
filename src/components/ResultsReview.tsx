@@ -2,9 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, X, Target, BarChart3 } from 'lucide-react';
-import { useState } from 'react';
-import UserProfile from './UserProfile';
+import { CheckCircle, X, Target } from 'lucide-react';
 
 interface Question {
   id: number;
@@ -23,7 +21,6 @@ interface ResultsReviewProps {
 }
 
 const ResultsReview = ({ answers, questions, onComplete, title, type }: ResultsReviewProps) => {
-  const [showProfile, setShowProfile] = useState(false);
   
   const correctCount = answers.filter((answer, index) => 
     answer === questions[index].correctAnswer
@@ -178,30 +175,15 @@ const ResultsReview = ({ answers, questions, onComplete, title, type }: ResultsR
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
-          <Button 
-            onClick={() => setShowProfile(true)}
-            variant="outline"
-            className="bg-white hover:bg-gray-50 text-blue-800 border-blue-200 px-6 py-3 text-lg font-semibold"
-          >
-            <BarChart3 className="w-5 h-5 mr-2" />
-            Ver Detalhamento
-          </Button>
-          
+        <div className="text-center">
           <Button 
             onClick={onComplete}
-            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 text-lg font-semibold"
+            className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 text-lg font-semibold"
           >
             {type === 'diagnostic' ? 'Ir para Treinamento' : 'Continuar'}
           </Button>
         </div>
       </div>
-
-      <UserProfile 
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
-        user="Usuário"
-      />
     </>
   );
 };
