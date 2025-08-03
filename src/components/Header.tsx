@@ -153,6 +153,15 @@ const Header = ({ currentView, onBackToTrails }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            className="text-blue-800"
+            onClick={() => navigate('/statistics')}
+          >
+            <BarChart3 className="w-4 h-4 mr-1" />
+            Estatísticas
+          </Button>
+          
           <Dialog open={isProfileOpen} onOpenChange={(open) => {
             setIsProfileOpen(open);
             if (!open) {

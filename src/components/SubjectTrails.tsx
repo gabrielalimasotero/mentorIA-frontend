@@ -1,8 +1,10 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, Atom, Globe, BookOpen, Lock, PlayCircle, CheckCircle } from 'lucide-react';
+import { Calculator, Atom, Globe, BookOpen, Lock, PlayCircle, CheckCircle, Target } from 'lucide-react';
+import PersonalizedLearningPaths from './PersonalizedLearningPaths';
 
 interface SubjectTrailsProps {
   hasCompletedDiagnostic: boolean;
@@ -11,6 +13,11 @@ interface SubjectTrailsProps {
 }
 
 const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTraining }: SubjectTrailsProps) => {
+  const [showPersonalizedPaths, setShowPersonalizedPaths] = useState(false);
+  
+  // Verificar se há trilhas personalizadas
+  const hasPersonalizedPaths = localStorage.getItem('learning_paths') !== null;
+  
   const subjects = [
     {
       id: 'math',
@@ -50,6 +57,13 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
     }
   ];
 
+  // Se há trilhas personalizadas e o usuário quer vê-las
+  if (showPersonalizedPaths && hasPersonalizedPaths) {
+    return (
+      <PersonalizedLearningPaths onStartTraining={onStartTraining} />
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-8">
@@ -57,6 +71,19 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
         <p className="text-lg text-gray-600">
           Escolha a área que deseja estudar e comece sua jornada personalizada
         </p>
+        
+        {/* Botão para trilhas personalizadas */}
+        {hasPersonalizedPaths && (
+          <div className="mt-6">
+            <Button
+              onClick={() => setShowPersonalizedPaths(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3"
+            >
+              <Target className="w-5 h-5 mr-2" />
+              Ver Trilhas Personalizadas
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

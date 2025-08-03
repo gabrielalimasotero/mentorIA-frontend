@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/components/LoginPage";
 import Dashboard from "@/components/Dashboard";
+import StatisticsPage from "@/components/StatisticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -32,6 +33,14 @@ const App = () => (
               element={
                 <ProtectedRoute redirectTo="/">
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/statistics"
+              element={
+                <ProtectedRoute redirectTo="/">
+                  <StatisticsPage />
                 </ProtectedRoute>
               }
             />
