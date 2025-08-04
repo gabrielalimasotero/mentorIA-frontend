@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Target, 
-  CheckCircle, 
-  SkipForward, 
-  ChevronRight, 
+import {
+  Target,
+  CheckCircle,
+  SkipForward,
+  ChevronRight,
   ChevronLeft,
-  Trophy, 
+  Trophy,
   Calendar,
   BookOpen,
   Play,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import DailyGoalComplete from './DailyGoalComplete';
 import ResultsReview from './ResultsReview';
+import { StatisticsService } from '@/lib/statistics';
 
 interface TrainingQuestion {
   id: number;
@@ -26,6 +27,7 @@ interface TrainingQuestion {
   question: string;
   options: string[];
   correctAnswer: number;
+  subtopic?: string; // Adicionando subtópico para estatísticas
 }
 
 const TrainingInterface = () => {
@@ -56,7 +58,7 @@ const TrainingInterface = () => {
         }
       }
     }
-    
+
     // Carregar metas batidas
     const savedGoals = localStorage.getItem('user_goals');
     if (savedGoals) {
@@ -68,7 +70,8 @@ const TrainingInterface = () => {
   const trainingQuestions: TrainingQuestion[] = [
     {
       id: 1,
-      topic: "Função Quadrática",
+      topic: "Funções",
+      subtopic: "Função Quadrática",
       difficulty: "Médio",
       question: "Uma bola é lançada verticalmente para cima. Sua altura h (em metros) em função do tempo t (em segundos) é dada por h(t) = -5t² + 20t + 1. Em que momento a bola atinge sua altura máxima?",
       options: ["t = 1s", "t = 2s", "t = 3s", "t = 4s"],
@@ -76,7 +79,8 @@ const TrainingInterface = () => {
     },
     {
       id: 2,
-      topic: "Probabilidade",
+      topic: "Probabilidade e Estatística",
+      subtopic: "Probabilidade",
       difficulty: "Fácil",
       question: "Em uma urna há 8 bolas vermelhas e 12 bolas azuis. Qual a probabilidade de sortear uma bola vermelha?",
       options: ["8/20", "12/20", "8/12", "12/8"],
@@ -85,6 +89,7 @@ const TrainingInterface = () => {
     {
       id: 3,
       topic: "Geometria Espacial",
+      subtopic: "Volumes",
       difficulty: "Difícil",
       question: "Um cilindro tem raio da base igual a 3 cm e altura 8 cm. Qual é o volume deste cilindro?",
       options: ["24π cm³", "48π cm³", "72π cm³", "96π cm³"],
@@ -92,7 +97,8 @@ const TrainingInterface = () => {
     },
     {
       id: 4,
-      topic: "Progressão Aritmética",
+      topic: "Álgebra",
+      subtopic: "Progressão Aritmética (PA)",
       difficulty: "Médio",
       question: "Em uma PA, o primeiro termo é 5 e a razão é 3. Qual é o 10º termo?",
       options: ["30", "32", "35", "38"],
@@ -100,133 +106,74 @@ const TrainingInterface = () => {
     },
     {
       id: 5,
-      topic: "Trigonometria",
-      difficulty: "Médio",
-      question: "Qual o valor de sen(90°)?",
-      options: ["0", "1", "√2/2", "√3/2"],
-      correctAnswer: 1
+      topic: "Aritmética",
+      subtopic: "Porcentagem e Razão",
+      difficulty: "Fácil",
+      question: "Um produto que custava R$ 80,00 teve um aumento de 15%. Qual é o novo preço?",
+      options: ["R$ 85,00", "R$ 88,00", "R$ 92,00", "R$ 95,00"],
+      correctAnswer: 2
     },
     {
       id: 6,
-      topic: "Logaritmo",
+      topic: "Geometria Plana",
+      subtopic: "Teorema de Pitágoras",
       difficulty: "Médio",
-      question: "Qual o valor de log₂(8)?",
-      options: ["2", "3", "4", "8"],
-      correctAnswer: 1
+      question: "Em um triângulo retângulo, os catetos medem 6 cm e 8 cm. Qual é a medida da hipotenusa?",
+      options: ["10 cm", "12 cm", "14 cm", "16 cm"],
+      correctAnswer: 0
     },
     {
       id: 7,
-      topic: "Análise Combinatória",
+      topic: "Trigonometria",
+      subtopic: "Razões Trigonométricas",
       difficulty: "Difícil",
-      question: "De quantas maneiras podemos arranjar 5 pessoas em fila?",
-      options: ["25", "60", "120", "150"],
-      correctAnswer: 2
+      question: "Qual é o valor de sen(30°)?",
+      options: ["0", "1/2", "√2/2", "1"],
+      correctAnswer: 1
     },
     {
       id: 8,
-      topic: "Geometria Plana",
-      difficulty: "Fácil",
-      question: "A área de um quadrado com lado 4 cm é:",
-      options: ["8 cm²", "12 cm²", "16 cm²", "20 cm²"],
-      correctAnswer: 2
+      topic: "Álgebra",
+      subtopic: "Equações do 2º grau",
+      difficulty: "Médio",
+      question: "Resolva a equação x² - 5x + 6 = 0",
+      options: ["x = 2 e x = 3", "x = -2 e x = -3", "x = 1 e x = 6", "x = -1 e x = -6"],
+      correctAnswer: 0
     },
     {
       id: 9,
-      topic: "Função Exponencial",
-      difficulty: "Médio",
-      question: "Qual o valor de 2³?",
-      options: ["6", "8", "9", "12"],
-      correctAnswer: 1
+      topic: "Funções",
+      subtopic: "Função Afim (1º grau)",
+      difficulty: "Fácil",
+      question: "Qual é a função afim que passa pelos pontos (0, 3) e (2, 7)?",
+      options: ["f(x) = 2x + 3", "f(x) = 3x + 2", "f(x) = x + 3", "f(x) = 2x + 1"],
+      correctAnswer: 0
     },
     {
       id: 10,
-      topic: "Estatística",
-      difficulty: "Fácil",
-      question: "A mediana dos números 2, 4, 6, 8, 10 é:",
-      options: ["4", "5", "6", "7"],
-      correctAnswer: 2
-    },
-    {
-      id: 11,
-      topic: "Sistemas Lineares",
+      topic: "Probabilidade e Estatística",
+      subtopic: "Estatística Descritiva",
       difficulty: "Médio",
-      question: "No sistema {x + y = 5; x - y = 1}, qual o valor de x?",
-      options: ["2", "3", "4", "5"],
-      correctAnswer: 1
-    },
-    {
-      id: 12,
-      topic: "Geometria Analítica",
-      difficulty: "Difícil",
-      question: "A distância entre os pontos A(1,2) e B(4,6) é:",
-      options: ["3", "4", "5", "6"],
-      correctAnswer: 2
-    },
-    {
-      id: 13,
-      topic: "Porcentagem",
-      difficulty: "Fácil",
-      question: "25% de 200 é igual a:",
-      options: ["25", "50", "75", "100"],
-      correctAnswer: 1
-    },
-    {
-      id: 14,
-      topic: "Função Afim",
-      difficulty: "Médio",
-      question: "Na função f(x) = 3x + 2, qual o valor de f(4)?",
-      options: ["12", "14", "16", "18"],
-      correctAnswer: 1
-    },
-    {
-      id: 15,
-      topic: "Juros Simples",
-      difficulty: "Médio",
-      question: "Qual o juro simples de R$ 1000 a 5% ao mês por 3 meses?",
-      options: ["R$ 150", "R$ 200", "R$ 250", "R$ 300"],
-      correctAnswer: 0
-    },
-    {
-      id: 16,
-      topic: "Inequação",
-      difficulty: "Médio",
-      question: "A solução da inequação 2x - 4 ≥ 0 é:",
-      options: ["x ≥ 2", "x ≤ 2", "x ≥ 4", "x ≤ 4"],
-      correctAnswer: 0
-    },
-    {
-      id: 17,
-      topic: "Matriz",
-      difficulty: "Difícil",
-      question: "O determinante da matriz [[2,1],[3,4]] é:",
+      question: "Qual é a média dos números 2, 4, 6, 8, 10?",
       options: ["5", "6", "7", "8"],
-      correctAnswer: 0
-    },
-    {
-      id: 18,
-      topic: "Progressão Geométrica",
-      difficulty: "Médio",
-      question: "Em uma PG de primeiro termo 2 e razão 3, qual é o 4º termo?",
-      options: ["18", "24", "27", "54"],
-      correctAnswer: 3
-    },
-    {
-      id: 19,
-      topic: "Polígonos",
-      difficulty: "Fácil",
-      question: "Quantos lados tem um hexágono?",
-      options: ["5", "6", "7", "8"],
-      correctAnswer: 1
-    },
-    {
-      id: 20,
-      topic: "Razão e Proporção",
-      difficulty: "Médio",
-      question: "Se 3:x = 6:8, qual o valor de x?",
-      options: ["3", "4", "5", "6"],
       correctAnswer: 1
     }
   ];
+
+  // Função para registrar resposta no backend
+  const recordAnswer = async (question: TrainingQuestion, isCorrect: boolean) => {
+    try {
+      await StatisticsService.recordAnswer({
+        questionId: question.id.toString(),
+        subtopicName: question.subtopic || question.topic,
+        topicName: question.topic,
+        isCorrect
+      });
+    } catch (error) {
+      console.error('Erro ao registrar resposta:', error);
+      // Não interromper o fluxo se falhar
+    }
+  };
 
   const handleStartTraining = () => {
     setIsTraining(true);
@@ -245,7 +192,7 @@ const TrainingInterface = () => {
     if (selectedAnswer !== null) {
       updatedAnswers[currentQuestion] = selectedAnswer;
     }
-    
+
     const sessionProgress = {
       date: new Date().toDateString(),
       currentSession: {
@@ -255,7 +202,7 @@ const TrainingInterface = () => {
       completed: dailyProgress
     };
     localStorage.setItem('training_progress', JSON.stringify(sessionProgress));
-    
+
     // Voltar para a tela principal
     setIsTraining(false);
   };
@@ -266,12 +213,12 @@ const TrainingInterface = () => {
       const updatedAnswers = [...answers];
       updatedAnswers[currentQuestion] = selectedAnswer;
       setAnswers(updatedAnswers);
-      
+
       // Voltar uma questão
       const previousQuestion = currentQuestion - 1;
       setCurrentQuestion(previousQuestion);
       setSelectedAnswer(updatedAnswers[previousQuestion]);
-      
+
       // Salvar progresso
       const sessionProgress = {
         date: new Date().toDateString(),
@@ -285,11 +232,20 @@ const TrainingInterface = () => {
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = selectedAnswer;
     setAnswers(newAnswers);
-    
+
+    // Registrar resposta no backend se uma resposta foi selecionada
+    if (selectedAnswer !== null) {
+      const currentQ = trainingQuestions[currentQuestion];
+      const isCorrect = selectedAnswer === currentQ.correctAnswer;
+
+      // Registrar estatística no backend
+      await recordAnswer(currentQ, isCorrect);
+    }
+
     // Salvar progresso da sessão
     const sessionProgress = {
       date: new Date().toDateString(),
@@ -300,7 +256,7 @@ const TrainingInterface = () => {
       completed: dailyProgress
     };
     localStorage.setItem('training_progress', JSON.stringify(sessionProgress));
-    
+
     if (currentQuestion < 19) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(newAnswers[currentQuestion + 1]);
@@ -308,12 +264,12 @@ const TrainingInterface = () => {
       // Completou as 20 questões
       const newDailyProgress = dailyProgress + 20;
       setDailyProgress(newDailyProgress);
-      
+
       // Incrementar metas batidas
       const newGoalsMet = goalsMet + 1;
       setGoalsMet(newGoalsMet);
       localStorage.setItem('user_goals', newGoalsMet.toString());
-      
+
       // Salvar histórico de respostas para revisão
       const sessionData = {
         answers: newAnswers,
@@ -321,19 +277,19 @@ const TrainingInterface = () => {
         completedAt: new Date().toISOString(),
         type: 'training'
       };
-      
+
       const trainingHistory = localStorage.getItem('training_history');
       const history = trainingHistory ? JSON.parse(trainingHistory) : [];
       history.push(sessionData);
       localStorage.setItem('training_history', JSON.stringify(history));
-      
+
       const finalProgress = {
         date: new Date().toDateString(),
         completed: newDailyProgress,
         currentSession: null
       };
       localStorage.setItem('training_progress', JSON.stringify(finalProgress));
-      
+
       setShowResults(true);
     }
   };
@@ -342,7 +298,7 @@ const TrainingInterface = () => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = null;
     setAnswers(newAnswers);
-    
+
     const sessionProgress = {
       date: new Date().toDateString(),
       currentSession: {
@@ -352,7 +308,7 @@ const TrainingInterface = () => {
       completed: dailyProgress
     };
     localStorage.setItem('training_progress', JSON.stringify(sessionProgress));
-    
+
     if (currentQuestion < 19) {
       const nextQuestion = currentQuestion + 1;
       setCurrentQuestion(nextQuestion);
@@ -360,31 +316,31 @@ const TrainingInterface = () => {
     } else {
       const newDailyProgress = dailyProgress + 20;
       setDailyProgress(newDailyProgress);
-      
+
       // Incrementar metas batidas
       const newGoalsMet = goalsMet + 1;
       setGoalsMet(newGoalsMet);
       localStorage.setItem('user_goals', newGoalsMet.toString());
-      
+
       const sessionData = {
         answers: newAnswers,
         questions: trainingQuestions,
         completedAt: new Date().toISOString(),
         type: 'training'
       };
-      
+
       const trainingHistory = localStorage.getItem('training_history');
       const history = trainingHistory ? JSON.parse(trainingHistory) : [];
       history.push(sessionData);
       localStorage.setItem('training_history', JSON.stringify(history));
-      
+
       const finalProgress = {
         date: new Date().toDateString(),
         completed: newDailyProgress,
         currentSession: null
       };
       localStorage.setItem('training_progress', JSON.stringify(finalProgress));
-      
+
       setShowResults(true);
     }
   };
@@ -406,7 +362,7 @@ const TrainingInterface = () => {
 
   if (showResults) {
     return (
-      <ResultsReview 
+      <ResultsReview
         answers={answers}
         questions={trainingQuestions}
         onComplete={handleResultsComplete}
@@ -418,7 +374,7 @@ const TrainingInterface = () => {
 
   if (showDailyComplete) {
     return (
-      <DailyGoalComplete 
+      <DailyGoalComplete
         onContinue={handleContinueTraining}
         onFinish={handleFinishDay}
       />
@@ -469,7 +425,7 @@ const TrainingInterface = () => {
                   <div className="text-sm text-green-600">20 questões</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                   <BookOpen className="w-5 h-5 text-blue-600" />
@@ -479,7 +435,7 @@ const TrainingInterface = () => {
                   <div className="text-sm text-blue-600">Intermediário</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                 <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
                   <Trophy className="w-5 h-5 text-yellow-600" />
@@ -492,7 +448,7 @@ const TrainingInterface = () => {
             </div>
 
             <div className="text-center">
-              <Button 
+              <Button
                 onClick={handleStartTraining}
                 className="bg-blue-800 hover:bg-blue-900 text-white px-8 py-3 text-lg font-semibold"
               >
@@ -553,18 +509,16 @@ const TrainingInterface = () => {
               <button
                 key={index}
                 onClick={() => handleAnswerSelect(index)}
-                className={`w-full p-4 text-left border-2 rounded-lg transition-all duration-200 ${
-                  selectedAnswer === index
+                className={`w-full p-4 text-left border-2 rounded-lg transition-all duration-200 ${selectedAnswer === index
                     ? 'border-blue-700 bg-blue-50 text-blue-900'
                     : 'border-gray-200 hover:border-blue-500 hover:bg-blue-25'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                    selectedAnswer === index
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedAnswer === index
                       ? 'border-blue-700 bg-blue-700'
                       : 'border-gray-300'
-                  }`}>
+                    }`}>
                     {selectedAnswer === index && (
                       <CheckCircle className="w-4 h-4 text-white" />
                     )}
@@ -585,7 +539,7 @@ const TrainingInterface = () => {
               <Pause className="w-4 h-4 mr-2" />
               Pausar
             </Button>
-            
+
             <Button
               variant="outline"
               onClick={handleBack}
@@ -595,7 +549,7 @@ const TrainingInterface = () => {
               <ChevronLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
-            
+
             <Button
               variant="outline"
               onClick={handleSkip}
@@ -604,7 +558,7 @@ const TrainingInterface = () => {
               <SkipForward className="w-4 h-4 mr-2" />
               Pular
             </Button>
-            
+
             <Button
               onClick={handleConfirm}
               disabled={selectedAnswer === null}

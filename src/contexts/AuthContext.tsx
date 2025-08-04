@@ -13,7 +13,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, birthDate: string, institution: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
-  refetchUser: () => Promise<void>; // ✅ novo
+  refetchUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,7 +32,6 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Inicializa o estado com base no token existente
     return tokenUtils.isAuthenticated();
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +47,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return userData;
       } catch (error: any) {
         console.error('Erro ao buscar dados do usuário:', error);
-        // Se o erro for 401, significa que o token é inválido
         if (error.response?.status === 401) {
           handleLogout();
         }
@@ -56,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     },
     enabled: isAuthenticated,
-    retry: false, // Não tentar novamente em caso de erro
+    retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
@@ -74,34 +72,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const checkAuth = async () => {
       try {
         const hasToken = tokenUtils.isAuthenticated();
-        const savedUser = userUtils.getUser();
-        
+
         if (!hasToken) {
           handleLogout();
           return;
         }
 
-        // Se tem token e usuário salvo, usar dados do cache primeiro
-        if (hasToken && savedUser) {
+        // Se tem token, verificar se é válido
+        try {
+          const userData = await authService.getCurrentUser();
+          queryClient.setQueryData(['user'], userData);
           setIsAuthenticated(true);
-          queryClient.setQueryData(['user'], savedUser);
-        }
-
-        // Sempre tentar atualizar os dados do usuário em background
-        if (hasToken) {
-          try {
-            const userData = await authService.getCurrentUser();
-            queryClient.setQueryData(['user'], userData);
-            setIsAuthenticated(true);
-          } catch (error: any) {
-            // Só fazer logout se o erro for de autenticação
-            if (error.response?.status === 401) {
-              handleLogout();
-            }
+        } catch (error: any) {
+          if (error.response?.status === 401) {
+            handleLogout();
           }
         }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
+        handleLogout();
       } finally {
         setIsLoading(false);
       }
@@ -113,15 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Mutation para login
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      setIsLoading(true);
-      try {
-        const result = await authService.login({ email, password });
-        return result;
-      } catch (error) {
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
+      return await authService.login({ email, password });
     },
     onSuccess: (data) => {
       tokenUtils.saveToken(data.token);
@@ -135,14 +116,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
     },
     onError: (error: any) => {
-      // Limpar qualquer estado de autenticação em caso de erro
       tokenUtils.clearToken();
       userUtils.clearUser();
       setIsAuthenticated(false);
       queryClient.clear();
-      
-      const errorMessage = error.message || 'Erro ao fazer login';
-      
+
+      const errorMessage = error.response?.data?.message || error.message || 'Erro ao fazer login';
+
       toast({
         title: 'Erro no login',
         description: errorMessage,
@@ -153,12 +133,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Mutation para registro
   const registerMutation = useMutation({
-    mutationFn: ({ name, email, password, birthDate, institution }: { 
-      name: string; 
-      email: string; 
-      password: string; 
-      birthDate: string; 
-      institution: string; 
+    mutationFn: ({ name, email, password, birthDate, institution }: {
+      name: string;
+      email: string;
+      password: string;
+      birthDate: string;
+      institution: string;
     }) =>
       authService.register({ name, email, password, birthDate, institution }),
     onSuccess: (data) => {
@@ -181,84 +161,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     },
   });
 
-  // Função de logout
-  const logout = async () => {
-    try {
-      setIsLoading(true);
-      await authService.logout();
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    } finally {
-      handleLogout();
-    }
-  };
-
-  // Mutation para recuperação de senha
+  // Mutation para forgot password
   const forgotPasswordMutation = useMutation({
-    mutationFn: authService.forgotPassword,
+    mutationFn: (email: string) => authService.forgotPassword(email),
     onSuccess: () => {
       toast({
-        title: 'Email enviado',
+        title: 'Email enviado!',
         description: 'Verifique sua caixa de entrada para redefinir sua senha.',
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Erro',
-        description: error.response?.data?.message || 'Erro ao enviar email',
+        title: 'Erro ao enviar email',
+        description: error.response?.data?.message || 'Erro ao enviar email de recuperação',
         variant: 'destructive',
       });
     },
   });
 
   const login = async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      const data = await authService.login({ email, password });
-      tokenUtils.saveToken(data.token);
-      userUtils.saveUser(data.user);
-      setIsAuthenticated(true);
-      queryClient.setQueryData(['user'], data.user);
-      toast({
-        title: 'Login realizado com sucesso!',
-        description: `Bem-vindo(a), ${data.user.name}!`,
-      });
-    } catch (error: any) {
-      // Limpar dados de autenticação
-      handleLogout();
-      
-      // Propagar o erro com a mensagem do backend
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+    await loginMutation.mutateAsync({ email, password });
   };
 
   const register = async (name: string, email: string, password: string, birthDate: string, institution: string) => {
-    setIsLoading(true);
+    await registerMutation.mutateAsync({ name, email, password, birthDate, institution });
+  };
+
+  const logout = async () => {
     try {
-      const data = await authService.register({ name, email, password, birthDate, institution });
-      tokenUtils.saveToken(data.token);
-      userUtils.saveUser(data.user);
-      setIsAuthenticated(true);
-      queryClient.setQueryData(['user'], data.user);
-      toast({
-        title: 'Conta criada com sucesso!',
-        description: `Bem-vindo(a), ${data.user.name}!`,
-      });
-    } catch (error: any) {
-      const errorMessage = error.message || 'Erro ao criar conta';
-      toast({
-        title: 'Erro no cadastro',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw error;
+      await authService.logout();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
     } finally {
-      setIsLoading(false);
+      handleLogout();
+      toast({
+        title: 'Logout realizado',
+        description: 'Você foi desconectado com sucesso.',
+      });
     }
   };
 
@@ -267,33 +206,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refetchUser = async () => {
-    try {
-      // Invalida o cache primeiro
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-      // Força uma nova busca
-      await refetch();
-      
-      // Busca dados diretamente da API e atualiza o cache
-      const freshUserData = await authService.getCurrentUser();
-      queryClient.setQueryData(['user'], freshUserData);
-      
-      // Atualiza localStorage também
-      userUtils.saveUser(freshUserData);
-    } catch (error) {
-      console.error('Erro ao atualizar dados do usuário:', error);
-    }
+    await refetch();
   };
 
   const value: AuthContextType = {
-    user,
-    isLoading,
+    user: user || null,
+    isLoading: isLoading || loginMutation.isPending || registerMutation.isPending,
     isAuthenticated,
     setIsAuthenticated,
     login,
     register,
     logout,
     forgotPassword,
-    refetchUser, // Adicionado ao contexto
+    refetchUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

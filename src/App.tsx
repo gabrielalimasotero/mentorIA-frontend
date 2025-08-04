@@ -28,7 +28,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LoginPage />} />
-            <Route 
+            <Route
               path="/dashboard"
               element={
                 <ProtectedRoute redirectTo="/">
@@ -36,7 +36,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route 
+            <Route
               path="/statistics"
               element={
                 <ProtectedRoute redirectTo="/">
