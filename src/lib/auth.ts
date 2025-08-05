@@ -143,6 +143,13 @@ export const tokenUtils = {
   clearToken(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // Limpar outros dados relacionados à autenticação
+    localStorage.removeItem('training_progress');
+    localStorage.removeItem('user_goals');
+    localStorage.removeItem('diagnostic_completed');
+    localStorage.removeItem('diagnostic_progress');
+    localStorage.removeItem('learning_paths');
+    localStorage.removeItem('preload_status');
   },
 };
 
@@ -171,5 +178,18 @@ export const userUtils = {
   // Limpar dados do usuário
   clearUser(): void {
     localStorage.removeItem('user');
+    // Limpar outros dados relacionados ao usuário
+    localStorage.removeItem('training_progress');
+    localStorage.removeItem('user_goals');
+    localStorage.removeItem('diagnostic_completed');
+    localStorage.removeItem('diagnostic_progress');
+    localStorage.removeItem('learning_paths');
+    localStorage.removeItem('preload_status');
+  },
+
+  // Limpar todos os dados de autenticação
+  clearAllAuthData(): void {
+    this.clearUser();
+    tokenUtils.clearToken();
   },
 }; 

@@ -10,13 +10,40 @@ interface SubjectTrailsProps {
   hasCompletedDiagnostic: boolean;
   onStartDiagnostic: () => void;
   onStartTraining: () => void;
+  onContinueTraining?: () => void;
 }
 
-const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTraining }: SubjectTrailsProps) => {
+const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTraining, onContinueTraining }: SubjectTrailsProps) => {
   const [showPersonalizedPaths, setShowPersonalizedPaths] = useState(false);
   
   // Verificar se há trilhas personalizadas
   const hasPersonalizedPaths = localStorage.getItem('learning_paths') !== null;
+  
+  // Verificar se há uma sessão de treinamento em andamento
+  const hasActiveTrainingSession = (() => {
+    try {
+      const trainingProgress = localStorage.getItem('training_progress');
+      if (!trainingProgress) return false;
+      
+      const progress = JSON.parse(trainingProgress);
+      const today = new Date().toDateString();
+      
+      // Verificar se é uma sessão de hoje
+      if (progress.date !== today) return false;
+      
+      // Se há uma sessão ativa (currentSession existe), verificar se não foi completada
+      if (progress.currentSession) {
+        return progress.currentSession.currentQuestion < 20;
+      }
+      
+      // Se não há sessão ativa, mas já completou questões hoje, considerar como "continuar"
+      // (usuário pode querer fazer mais questões além das 20 diárias)
+      return progress.completed && progress.completed > 0;
+    } catch (error) {
+      console.error('Erro ao verificar sessão ativa:', error);
+      return false;
+    }
+  })();
   
   const subjects = [
     {
@@ -156,11 +183,17 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
                 
                 {subject.id === 'math' && !isLocked && (
                   <Button 
-                    onClick={hasCompletedDiagnostic ? onStartTraining : onStartDiagnostic}
+                    onClick={hasCompletedDiagnostic 
+                      ? (hasActiveTrainingSession && onContinueTraining ? onContinueTraining : onStartTraining)
+                      : onStartDiagnostic
+                    }
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <PlayCircle className="w-4 h-4 mr-2" />
-                    {hasCompletedDiagnostic ? 'Iniciar Treinamento' : 'Iniciar Diagnóstico'}
+                    {hasCompletedDiagnostic 
+                      ? (hasActiveTrainingSession ? 'Continuar Treinamento' : 'Iniciar Treinamento')
+                      : 'Iniciar Diagnóstico'
+                    }
                   </Button>
                 )}
                 

@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 // Instância do axios com configurações base
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // Aumentado para 60 segundos devido à consulta lenta de competências
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,6 +15,9 @@ export const api = axios.create({
 // Interceptor para adicionar token em todas as requisições
 api.interceptors.request.use(
   (config) => {
+    console.log('🌐 Requisição para:', config.baseURL + config.url);
+    console.log('🔑 Token presente:', !!localStorage.getItem('token'));
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -22,6 +25,7 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('❌ Erro na requisição:', error);
     return Promise.reject(error);
   }
 );

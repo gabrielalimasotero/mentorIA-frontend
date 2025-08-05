@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubjectTrails from './SubjectTrails';
 import EnhancedDiagnosticTest from './EnhancedDiagnosticTest';
@@ -18,6 +18,14 @@ const Dashboard = () => {
   const [currentView, setCurrentView] = useState<CurrentView>(
     hasCompletedDiagnostic ? 'training' : 'trails'
   );
+  const [forceContinueTraining, setForceContinueTraining] = useState(false);
+
+  // Resetar forceContinueTraining quando sair da view de training
+  useEffect(() => {
+    if (currentView !== 'training') {
+      setForceContinueTraining(false);
+    }
+  }, [currentView]);
 
   const handleStartDiagnostic = () => {
     setCurrentView('diagnostic');
@@ -25,6 +33,13 @@ const Dashboard = () => {
 
   const handleStartTraining = () => {
     setCurrentView('training');
+  };
+
+  const handleContinueTraining = () => {
+    setForceContinueTraining(true);
+    setCurrentView('training');
+    // A função continueTraining será chamada automaticamente pelo TrainingInterface
+    // quando detectar que não há sessão ativa mas já completou questões hoje
   };
 
   const handleBackToTrails = () => {
@@ -104,6 +119,7 @@ const Dashboard = () => {
             hasCompletedDiagnostic={hasCompletedDiagnostic}
             onStartDiagnostic={handleStartDiagnostic}
             onStartTraining={handleStartTraining}
+            onContinueTraining={handleContinueTraining}
           />
         )}
         
@@ -112,7 +128,10 @@ const Dashboard = () => {
         )}
         
         {currentView === 'training' && (
-          <TrainingInterface />
+          <TrainingInterface 
+            onContinueTraining={handleContinueTraining} 
+            forceContinueTraining={forceContinueTraining}
+          />
         )}
       </div>
     </div>

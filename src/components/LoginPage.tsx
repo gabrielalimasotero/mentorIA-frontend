@@ -49,7 +49,10 @@ const LoginPage = () => {
 
   // Redirecionar se já estiver autenticado
   useEffect(() => {
+    console.log('🔍 LoginPage useEffect - Estado atual:', { isAuthenticated, user, isLoading });
+    
     if (isAuthenticated && user) {
+      console.log('✅ Usuário autenticado, redirecionando para dashboard...');
       navigate('/dashboard');
     }
   }, [isAuthenticated, user, navigate]);

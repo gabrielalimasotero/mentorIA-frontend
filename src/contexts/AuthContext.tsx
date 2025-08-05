@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User } from '@/lib/api';
 import { authService, tokenUtils, userUtils } from '@/lib/auth';
+import { dynamicQuestionsService } from '@/lib/dynamic-questions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { usePreloadStatus } from '@/hooks/use-preload-status';
 
 interface AuthContextType {
   user: User | null;
@@ -38,6 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { markAsPreloaded, isPreloaded } = usePreloadStatus();
 
   // Query para buscar dados do usuário atual
   const { data: user, error, refetch } = useQuery({
@@ -62,8 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Função centralizada para fazer logout
   const handleLogout = () => {
-    tokenUtils.clearToken();
-    userUtils.clearUser();
+    userUtils.clearAllAuthData();
     setIsAuthenticated(false);
     setIsLoading(false);
     queryClient.clear();
@@ -73,16 +75,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('🔍 Verificando autenticação na inicialização...');
         const hasToken = tokenUtils.isAuthenticated();
         const savedUser = userUtils.getUser();
         
+        console.log('📊 Estado inicial:', { hasToken, savedUser: !!savedUser });
+        
         if (!hasToken) {
+          console.log('❌ Sem token, fazendo logout');
           handleLogout();
           return;
         }
 
         // Se tem token e usuário salvo, usar dados do cache primeiro
         if (hasToken && savedUser) {
+          console.log('✅ Token e usuário encontrados, definindo como autenticado');
           setIsAuthenticated(true);
           queryClient.setQueryData(['user'], savedUser);
         }
@@ -90,18 +97,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Sempre tentar atualizar os dados do usuário em background
         if (hasToken) {
           try {
+            console.log('🔄 Atualizando dados do usuário em background...');
             const userData = await authService.getCurrentUser();
+            console.log('✅ Dados do usuário atualizados:', userData);
             queryClient.setQueryData(['user'], userData);
             setIsAuthenticated(true);
           } catch (error: any) {
+            console.error('❌ Erro ao atualizar dados do usuário:', error);
             // Só fazer logout se o erro for de autenticação
             if (error.response?.status === 401) {
+              console.log('❌ Erro 401, fazendo logout');
               handleLogout();
             }
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
+        console.error('❌ Erro ao verificar autenticação:', error);
       } finally {
         setIsLoading(false);
       }
@@ -124,6 +135,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     },
     onSuccess: (data) => {
+      // Limpar dados antigos antes de salvar novos
+      userUtils.clearAllAuthData();
+      
+      // Salvar novos dados
       tokenUtils.saveToken(data.token);
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
@@ -136,8 +151,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     },
     onError: (error: any) => {
       // Limpar qualquer estado de autenticação em caso de erro
-      tokenUtils.clearToken();
-      userUtils.clearUser();
+      userUtils.clearAllAuthData();
       setIsAuthenticated(false);
       queryClient.clear();
       
@@ -162,6 +176,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }) =>
       authService.register({ name, email, password, birthDate, institution }),
     onSuccess: (data) => {
+      // Limpar dados antigos antes de salvar novos
+      userUtils.clearAllAuthData();
+      
+      // Salvar novos dados
       tokenUtils.saveToken(data.token);
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
@@ -213,17 +231,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('🚀 Iniciando processo de login...');
       setIsLoading(true);
       const data = await authService.login({ email, password });
+      console.log('✅ Login bem-sucedido, salvando dados:', data);
+      
       tokenUtils.saveToken(data.token);
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
       queryClient.setQueryData(['user'], data.user);
+      
+      console.log('💾 Dados salvos, iniciando pré-carregamento...');
+      
+      // Pré-carregar dados do usuário em background
+      try {
+        await dynamicQuestionsService.preloadUserData();
+        markAsPreloaded();
+        console.log('✅ Pré-carregamento concluído');
+      } catch (preloadError) {
+        console.log('⚠️ Pré-carregamento falhou, mas login continuará');
+      }
+      
       toast({
         title: 'Login realizado com sucesso!',
         description: `Bem-vindo(a), ${data.user.name}!`,
       });
+      
+      console.log('🎉 Login finalizado com sucesso');
     } catch (error: any) {
+      console.error('❌ Erro no login:', error);
       // Limpar dados de autenticação
       handleLogout();
       
@@ -245,6 +281,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
       queryClient.setQueryData(['user'], data.user);
+      
+      // Pré-carregar dados do usuário em background
+      try {
+        await dynamicQuestionsService.preloadUserData();
+        markAsPreloaded();
+      } catch (preloadError) {
+        console.log('⚠️ Pré-carregamento falhou, mas registro continuará');
+      }
+      
       toast({
         title: 'Conta criada com sucesso!',
         description: `Bem-vindo(a), ${data.user.name}!`,
