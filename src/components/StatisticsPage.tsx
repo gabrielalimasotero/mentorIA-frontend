@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  BarChart3, 
-  Target, 
-  Trophy, 
+import {
+  BarChart3,
+  Target,
+  Trophy,
   Calendar,
   BookOpen,
   TrendingUp,
@@ -15,10 +15,12 @@ import {
   CheckCircle,
   XCircle,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { statisticsService, UserStatistics } from '@/lib/statistics';
 
 interface StatisticsData {
   totalQuestions: number;
@@ -49,7 +51,7 @@ interface StatisticsData {
 const StatisticsPage = () => {
   const navigate = useNavigate();
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
-  
+
   const toggleTopic = (topicName: string) => {
     const newExpanded = new Set(expandedTopics);
     if (newExpanded.has(topicName)) {
@@ -68,7 +70,7 @@ const StatisticsPage = () => {
   const collapseAllTopics = () => {
     setExpandedTopics(new Set());
   };
-  
+
   // Definição dos tópicos e subtópicos válidos
   const SUBTOPICS_VALIDOS = {
     "Aritmética": [
@@ -125,7 +127,7 @@ const StatisticsPage = () => {
     ]
   };
 
-  const [statistics, setStatistics] = useState<StatisticsData>({
+  const [statistics, setStatistics] = useState<UserStatistics>({
     totalQuestions: 0,
     correctAnswers: 0,
     accuracy: 0,
@@ -137,11 +139,37 @@ const StatisticsPage = () => {
     recentActivity: []
   });
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     loadStatistics();
   }, []);
 
-  const loadStatistics = () => {
+  const loadStatistics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('📊 Carregando estatísticas do backend...');
+      const userStatistics = await statisticsService.getUserStatistics();
+
+      setStatistics(userStatistics);
+      console.log('✅ Estatísticas carregadas com sucesso');
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar estatísticas:', error);
+      setError('Erro ao carregar estatísticas. Tente novamente.');
+
+      // Fallback para dados do localStorage se a API falhar
+      loadLocalStatistics();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLocalStatistics = () => {
+    console.log('🔄 Carregando dados do localStorage como fallback...');
+
     // Carregar dados do localStorage
     const diagnosticProgress = localStorage.getItem('diagnostic_progress');
     const trainingProgress = localStorage.getItem('training_progress');
@@ -187,7 +215,7 @@ const StatisticsPage = () => {
         // Simular dados baseados no diagnóstico (em um sistema real, isso viria do backend)
         const topicQuestions = Math.floor(Math.random() * 20) + 5; // 5-25 questões por tópico
         const topicCorrect = Math.floor(topicQuestions * (0.5 + Math.random() * 0.4)); // 50-90% de acerto
-        
+
         const subtopicsProgress = subtopics.map(subtopic => {
           const subtopicQuestions = Math.floor(Math.random() * 8) + 2; // 2-10 questões por subtópico
           const subtopicCorrect = Math.floor(subtopicQuestions * (0.4 + Math.random() * 0.5)); // 40-90% de acerto
@@ -248,6 +276,38 @@ const StatisticsPage = () => {
     return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-gray-600">Carregando estatísticas...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={loadStatistics} variant="outline">
+                Tentar Novamente
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-6">
       <div className="max-w-6xl mx-auto">
@@ -262,6 +322,14 @@ const StatisticsPage = () => {
               Estatísticas
             </h1>
           </div>
+          <Button
+            onClick={loadStatistics}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Atualizar'}
+          </Button>
         </div>
 
         {/* Cards principais */}
@@ -358,15 +426,15 @@ const StatisticsPage = () => {
           <CardContent>
             <div className="space-y-4">
               {statistics.topicsProgress.map((topic, index) => (
-                <Collapsible 
-                  key={index} 
+                <Collapsible
+                  key={index}
                   open={expandedTopics.has(topic.topic)}
                   onOpenChange={() => toggleTopic(topic.topic)}
                 >
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                         {/* Header do tópico - sempre visível */}
-                     <CollapsibleTrigger asChild>
-                       <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-all duration-200">
+                    {/* Header do tópico - sempre visível */}
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-all duration-200">
                         <div className="flex items-center gap-3">
                           {expandedTopics.has(topic.topic) ? (
                             <ChevronDown className="w-5 h-5 text-gray-600" />
@@ -386,7 +454,7 @@ const StatisticsPage = () => {
                         </div>
                       </div>
                     </CollapsibleTrigger>
-                    
+
                     {/* Conteúdo expansível */}
                     <CollapsibleContent>
                       <div className="p-4 bg-white">
@@ -398,7 +466,7 @@ const StatisticsPage = () => {
                           </div>
                           <Progress value={topic.totalProgress} className="h-3" />
                         </div>
-                        
+
                         {/* Subtópicos */}
                         <div className="space-y-3">
                           <h4 className="font-medium text-gray-700 text-sm">Subtópicos:</h4>
@@ -432,14 +500,14 @@ const StatisticsPage = () => {
                 </Collapsible>
               ))}
             </div>
-            
+
             {/* Mensagem de incentivo quando não há progresso */}
             {!statistics.topicsProgress.some(topic => topic.totalQuestions > 0) && (
               <div className="text-center py-6 mt-6 border-t border-gray-200">
                 <p className="text-gray-600 mb-4">
                   Complete o diagnóstico inicial para começar a acompanhar seu progresso detalhado por tópicos e subtópicos
                 </p>
-                <Button 
+                <Button
                   onClick={() => navigate('/dashboard')}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >

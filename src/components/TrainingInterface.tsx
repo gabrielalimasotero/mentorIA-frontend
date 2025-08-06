@@ -8,6 +8,7 @@ import { CheckCircle, XCircle, ArrowRight, ArrowLeft, Trophy } from 'lucide-reac
 import DailyGoalComplete from './DailyGoalComplete';
 import OptimizedLoading from './OptimizedLoading';
 import { dynamicQuestionsService, DynamicQuestion } from '../lib/dynamic-questions';
+import { statisticsService } from '../lib/statistics';
 
 interface TrainingQuestion {
   id: string;
@@ -39,15 +40,15 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
   // Carregar progresso salvo e iniciar treinamento se necessário
   useEffect(() => {
     console.log('🔍 TrainingInterface useEffect executado');
-    
+
     const savedProgress = localStorage.getItem('training_progress');
     console.log('📦 Progresso salvo:', savedProgress);
-    
+
     if (savedProgress) {
       const progress = JSON.parse(savedProgress);
       const today = new Date().toDateString();
       console.log('📅 Data do progresso:', progress.date, 'Data atual:', today);
-      
+
       if (progress.date === today) {
         console.log('✅ Progresso de hoje encontrado, restaurando sessão...');
         setDailyProgress(progress.completed || 0);
@@ -59,7 +60,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
           // Restaurar resposta selecionada se existir
           const savedAnswers = progress.currentSession.answers || [];
           setSelectedAnswer(savedAnswers[progress.currentSession.currentQuestion] || null);
-          
+
           // Restaurar questões se existirem
           if (progress.questions) {
             console.log('📚 Restaurando questões salvas...');
@@ -75,7 +76,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
     } else {
       console.log('📦 Nenhum progresso salvo encontrado');
     }
-    
+
     // Carregar metas batidas
     const savedGoals = localStorage.getItem('user_goals');
     if (savedGoals) {
@@ -88,12 +89,12 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       startTraining();
     } else {
       console.log('⏸️ Sessão ativa encontrada, não iniciando automaticamente');
-      
+
       // Se não há sessão ativa mas já completou questões hoje, verificar se deve continuar
       const progress = JSON.parse(savedProgress);
       if (!progress.currentSession && progress.completed && progress.completed > 0) {
         console.log('🔄 Detectado que já completou questões hoje, verificando se deve continuar...');
-        
+
         // Se forceContinueTraining é true, continuar automaticamente
         if (forceContinueTraining) {
           console.log('🚀 Forçando continuação do treinamento...');
@@ -107,19 +108,19 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
   const continueTraining = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       console.log('🔄 Continuando treinamento com novas questões...');
-      
+
       // Carregar nova sessão de questões
       const session = await dynamicQuestionsService.getSession(20);
-      
+
       setQuestions(session.questions);
       setIsTraining(true);
       setCurrentQuestion(0);
       setSelectedAnswer(null);
       setAnswers(new Array(session.questions.length).fill(null));
-      
+
       // Salvar nova sessão
       const sessionData = {
         date: new Date().toDateString(),
@@ -131,7 +132,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
         }
       };
       localStorage.setItem('training_progress', JSON.stringify(sessionData));
-      
+
       console.log('✅ Nova sessão carregada com sucesso');
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar nova sessão');
@@ -145,31 +146,31 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
   const startTraining = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       console.log('🚀 Iniciando carregamento de sessão otimizada...');
-      
+
       // Usar a nova rota otimizada que aproveita o cache
       const session = await dynamicQuestionsService.getSession(20);
-      
+
       setQuestions(session.questions);
       setIsTraining(true);
       setCurrentQuestion(0);
       setSelectedAnswer(null);
       setAnswers(new Array(session.questions.length).fill(null));
-      
-             // Salvar sessão atual
-       const sessionData = {
-         date: new Date().toDateString(),
-         sessionId: session.sessionId,
-         questions: session.questions, // Salvar as questões também
-         currentSession: {
-           currentQuestion: 0,
-           answers: new Array(session.questions.length).fill(null)
-         }
-       };
-       localStorage.setItem('training_progress', JSON.stringify(sessionData));
-      
+
+      // Salvar sessão atual
+      const sessionData = {
+        date: new Date().toDateString(),
+        sessionId: session.sessionId,
+        questions: session.questions, // Salvar as questões também
+        currentSession: {
+          currentQuestion: 0,
+          answers: new Array(session.questions.length).fill(null)
+        }
+      };
+      localStorage.setItem('training_progress', JSON.stringify(sessionData));
+
       console.log('✅ Sessão carregada com sucesso (otimizada)');
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar sessão');
@@ -198,23 +199,37 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       newAnswers[currentQuestion] = selectedAnswer;
       setAnswers(newAnswers);
 
-      // Armazenar resposta localmente (sem enviar ao backend ainda)
+      // Armazenar resposta localmente e enviar ao backend
       const currentQ = questions[currentQuestion];
       const isCorrect = currentQ.alternatives[selectedAnswer]?.isCorrect || false;
-      
-      console.log('💾 Armazenando resposta localmente:', {
+
+      console.log('💾 Armazenando resposta:', {
         questionId: currentQ.id,
         answer: currentQ.alternatives[selectedAnswer]?.letter || '',
         isCorrect,
         competencyName: currentQ.subtopicName || currentQ.topicName || 'Desconhecido'
       });
 
+      // Salvar resposta no backend para estatísticas
+      try {
+        await statisticsService.saveUserAnswer({
+          questionId: currentQ.id,
+          selectedAlternativeId: currentQ.alternatives[selectedAnswer]?.id,
+          isCorrect,
+          timeSpentSeconds: undefined // TODO: Implementar tracking de tempo
+        });
+        console.log('✅ Resposta salva no backend');
+      } catch (error) {
+        console.error('❌ Erro ao salvar resposta no backend:', error);
+        // Não falhar o fluxo se o salvamento falhar
+      }
+
       // Avançar para próxima questão
       if (currentQuestion < questions.length - 1) {
         const nextQuestion = currentQuestion + 1;
         setCurrentQuestion(nextQuestion);
         setSelectedAnswer(newAnswers[nextQuestion]);
-        
+
         // Atualizar sessão salva
         const savedProgress = JSON.parse(localStorage.getItem('training_progress') || '{}');
         savedProgress.currentSession = {
@@ -225,7 +240,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       } else {
         // Treinamento concluído - enviar todas as respostas de uma vez
         console.log('🏁 Treinamento concluído, enviando todas as respostas...');
-        
+
         const allAnswers = newAnswers.map((answer, index) => {
           const question = questions[index];
           return {
@@ -237,17 +252,17 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
         }).filter(answer => answer.answer !== '');
 
         await dynamicQuestionsService.completeSession(allAnswers);
-        
+
         // Atualizar progresso
         const completedToday = dailyProgress + questions.length;
         setDailyProgress(completedToday);
-        
+
         // Salvar progresso
         const savedProgress = JSON.parse(localStorage.getItem('training_progress') || '{}');
         savedProgress.completed = completedToday;
         delete savedProgress.currentSession;
         localStorage.setItem('training_progress', JSON.stringify(savedProgress));
-        
+
         // Verificar se bateu a meta
         if (completedToday >= 20) {
           setGoalsMet(prev => prev + 1);
@@ -274,7 +289,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       const prevQuestion = currentQuestion - 1;
       setCurrentQuestion(prevQuestion);
       setSelectedAnswer(answers[prevQuestion]);
-      
+
       // Atualizar sessão salva
       const savedProgress = JSON.parse(localStorage.getItem('training_progress') || '{}');
       savedProgress.currentSession = {
@@ -290,12 +305,12 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
     newAnswers[currentQuestion] = null;
     setAnswers(newAnswers);
     setSelectedAnswer(null);
-    
+
     if (currentQuestion < questions.length - 1) {
       const nextQuestion = currentQuestion + 1;
       setCurrentQuestion(nextQuestion);
       setSelectedAnswer(newAnswers[nextQuestion]);
-      
+
       // Atualizar sessão salva
       const savedProgress = JSON.parse(localStorage.getItem('training_progress') || '{}');
       savedProgress.currentSession = {
@@ -335,7 +350,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
   if (showResults) {
     const score = calculateScore();
     const answeredCount = answers.filter(answer => answer !== null).length;
-    
+
     return (
       <div className="max-w-4xl mx-auto p-6">
         <Card>
@@ -360,7 +375,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
                 <div className="text-sm text-gray-600">Total de Questões</div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <h3 className="font-semibold">Resumo por Competência:</h3>
               {questions.map((question, index) => {
@@ -382,7 +397,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
                 );
               })}
             </div>
-            
+
             <Button onClick={handleFinishTraining} className="w-full">
               Voltar ao Dashboard
             </Button>
@@ -414,7 +429,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
                   Complete 20 questões por dia para manter o ritmo de estudos.
                 </p>
               </div>
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Estatísticas</h3>
                 <div className="space-y-2">
@@ -429,23 +444,23 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
                 </div>
               </div>
             </div>
-            
+
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-600">{error}</p>
-                <Button 
-                  onClick={() => setError(null)} 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  onClick={() => setError(null)}
+                  variant="outline"
+                  size="sm"
                   className="mt-2"
                 >
                   Tentar Novamente
                 </Button>
               </div>
             )}
-            
-            <Button 
-              onClick={startTraining} 
+
+            <Button
+              onClick={startTraining}
               disabled={loading}
               className="w-full"
             >
@@ -459,7 +474,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
 
   if (questions.length === 0) {
     return (
-      <OptimizedLoading 
+      <OptimizedLoading
         message="Carregando questões otimizadas..."
         showProgress={false}
       />
@@ -468,7 +483,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
 
   const currentQ = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
-  
+
   // Debug: verificar estrutura da questão atual
   console.log('🔍 Questão atual:', currentQ);
   console.log('📝 Alternativas:', currentQ?.alternatives);
@@ -496,7 +511,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
             <h3 className="text-lg font-semibold">{currentQ.title}</h3>
             <p className="text-gray-700">{currentQ.problemStatement}</p>
           </div>
-          
+
           <div className="space-y-3">
             <h4 className="font-medium">Alternativas:</h4>
             {currentQ.alternatives && currentQ.alternatives.length > 0 ? (
@@ -504,11 +519,10 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
                 <button
                   key={alternative.id}
                   onClick={() => handleAnswerSelect(index)}
-                  className={`w-full p-4 text-left border rounded-lg transition-colors ${
-                    selectedAnswer === index
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`w-full p-4 text-left border rounded-lg transition-colors ${selectedAnswer === index
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
                 >
                   <span className="font-medium mr-2">{alternative.letter}.</span>
                   {alternative.text}
@@ -521,7 +535,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
               </div>
             )}
           </div>
-          
+
           <div className="flex justify-between">
             <Button
               variant="outline"
@@ -531,7 +545,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
               <ArrowLeft className="h-4 w-4 mr-2" />
               Anterior
             </Button>
-            
+
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -539,7 +553,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
               >
                 Pular
               </Button>
-              
+
               <Button
                 data-testid="next-button"
                 onClick={handleNextQuestion}
