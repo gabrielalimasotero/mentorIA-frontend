@@ -192,11 +192,89 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   const login = async (email: string, password: string) => {
-    await loginMutation.mutateAsync({ email, password });
+    setIsLoading(true);
+    try {
+      const data = await authService.login({ email, password });
+      tokenUtils.saveToken(data.token);
+      userUtils.saveUser(data.user);
+      setIsAuthenticated(true);
+      queryClient.setQueryData(['user'], data.user);
+      
+      console.log('💾 Dados salvos, verificando se deve fazer pré-carregamento...');
+      
+      // Só fazer pré-carregamento se o usuário já completou o teste de nivelamento
+      if (data.user.has_completed_leveling_test) {
+        try {
+          await dynamicQuestionsService.preloadUserData();
+          markAsPreloaded();
+          console.log('✅ Pré-carregamento concluído (usuário já completou nivelamento)');
+        } catch (preloadError) {
+          console.log('⚠️ Pré-carregamento falhou, mas login continuará');
+        }
+      } else {
+        console.log('⏭️ Pulando pré-carregamento - usuário ainda não completou teste de nivelamento');
+      }
+      
+      toast({
+        title: 'Login realizado com sucesso!',
+        description: `Bem-vindo(a), ${data.user.name}!`,
+      });
+      
+      console.log('🎉 Login finalizado com sucesso');
+    } catch (error: any) {
+      console.error('❌ Erro no login:', error);
+      // Limpar dados de autenticação
+      handleLogout();
+      
+      // Propagar o erro com a mensagem do backend
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const register = async (name: string, email: string, password: string, birthDate: string, institution: string) => {
-    await registerMutation.mutateAsync({ name, email, password, birthDate, institution });
+    setIsLoading(true);
+    try {
+      const data = await authService.register({ name, email, password, birthDate, institution });
+      tokenUtils.saveToken(data.token);
+      userUtils.saveUser(data.user);
+      setIsAuthenticated(true);
+      queryClient.setQueryData(['user'], data.user);
+      
+      console.log('💾 Dados salvos, verificando se deve fazer pré-carregamento...');
+      
+      // Só fazer pré-carregamento se o usuário já completou o teste de nivelamento
+      if (data.user.has_completed_leveling_test) {
+        try {
+          await dynamicQuestionsService.preloadUserData();
+          markAsPreloaded();
+          console.log('✅ Pré-carregamento concluído (usuário já completou nivelamento)');
+        } catch (preloadError) {
+          console.log('⚠️ Pré-carregamento falhou, mas registro continuará');
+        }
+      } else {
+        console.log('⏭️ Pulando pré-carregamento - usuário ainda não completou teste de nivelamento');
+      }
+      
+      toast({
+        title: 'Conta criada com sucesso!',
+        description: `Bem-vindo(a), ${data.user.name}!`,
+      });
+    } catch (error: any) {
+      const errorMessage = error.message || 'Erro ao criar conta';
+      toast({
+        title: 'Erro no cadastro',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = async () => {

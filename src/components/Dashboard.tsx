@@ -1,24 +1,56 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SubjectTrails from './SubjectTrails';
-import EnhancedDiagnosticTest from './EnhancedDiagnosticTest';
+import LevelingTest from './LevelingTest';
 import TrainingInterface from './TrainingInterface';
 import Header from './Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { tokenUtils, userUtils } from '@/lib/auth';
 
-type CurrentView = 'trails' | 'diagnostic' | 'training';
+type CurrentView = 'trails' | 'leveling' | 'training';
 
 const Dashboard = () => {
   const { user, logout, isLoading, setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [hasCompletedDiagnostic, setHasCompletedDiagnostic] = useState<boolean>(
-    localStorage.getItem('diagnostic_completed') === 'true'
-  );
-  const [currentView, setCurrentView] = useState<CurrentView>(
-    hasCompletedDiagnostic ? 'training' : 'trails'
-  );
+  const [hasCompletedLevelingTest, setHasCompletedLevelingTest] = useState<boolean>(false);
+  const [currentView, setCurrentView] = useState<CurrentView>('trails');
   const [forceContinueTraining, setForceContinueTraining] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+  // Verificar status do teste de nivelamento
+  useEffect(() => {
+    const checkLevelingTestStatus = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const response = await fetch(`${API_URL}/leveling-test/status`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setHasCompletedLevelingTest(data.data.hasCompletedLevelingTest);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar status do teste de nivelamento:', error);
+      }
+    };
+
+    checkLevelingTestStatus();
+  }, [API_URL]);
+
+  // Definir view inicial baseado no status do teste de nivelamento
+  useEffect(() => {
+    if (hasCompletedLevelingTest) {
+      setCurrentView('training');
+    } else {
+      setCurrentView('trails');
+    }
+  }, [hasCompletedLevelingTest]);
 
   // Resetar forceContinueTraining quando sair da view de training
   useEffect(() => {
@@ -27,8 +59,8 @@ const Dashboard = () => {
     }
   }, [currentView]);
 
-  const handleStartDiagnostic = () => {
-    setCurrentView('diagnostic');
+  const handleStartLevelingTest = () => {
+    setCurrentView('leveling');
   };
 
   const handleStartTraining = () => {
@@ -38,24 +70,19 @@ const Dashboard = () => {
   const handleContinueTraining = () => {
     setForceContinueTraining(true);
     setCurrentView('training');
-    // A função continueTraining será chamada automaticamente pelo TrainingInterface
-    // quando detectar que não há sessão ativa mas já completou questões hoje
   };
 
   const handleBackToTrails = () => {
     setCurrentView('trails');
   };
 
-  const handleDiagnosticComplete = () => {
-    localStorage.setItem('diagnostic_completed', 'true');
-    setHasCompletedDiagnostic(true);
-    setCurrentView('training');
+  const handleLevelingTestComplete = () => {
+    setHasCompletedLevelingTest(true);
+    setCurrentView('training'); // Ir para treinamento após teste de nivelamento
   };
 
   const handleLogout = async () => {
     await logout();
-    localStorage.removeItem('diagnostic_completed');
-    localStorage.removeItem('diagnostic_progress');
     localStorage.removeItem('training_progress');
     navigate('/');
   };
@@ -78,8 +105,6 @@ const Dashboard = () => {
         setIsAuthenticated(false);
         tokenUtils.clearToken();
         userUtils.clearUser();
-        localStorage.removeItem('diagnostic_completed');
-        localStorage.removeItem('diagnostic_progress');
         localStorage.removeItem('training_progress');
         
         // Então navega para o login
@@ -116,15 +141,18 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {currentView === 'trails' && (
           <SubjectTrails 
-            hasCompletedDiagnostic={hasCompletedDiagnostic}
-            onStartDiagnostic={handleStartDiagnostic}
+            hasCompletedLevelingTest={hasCompletedLevelingTest}
+            onStartLevelingTest={handleStartLevelingTest}
             onStartTraining={handleStartTraining}
             onContinueTraining={handleContinueTraining}
           />
         )}
-        
-        {currentView === 'diagnostic' && (
-          <EnhancedDiagnosticTest onComplete={handleDiagnosticComplete} />
+
+        {currentView === 'leveling' && (
+          <LevelingTest
+            onComplete={handleLevelingTestComplete}
+            onBack={handleBackToTrails}
+          />
         )}
         
         {currentView === 'training' && (
