@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, SkipForward, ChevronRight, Brain, Target, BookOpen, TrendingUp } from 'lucide-react';
+import { CheckCircle, SkipForward, ChevronRight, Brain, Target, TrendingUp, BookOpen } from 'lucide-react';
 import EnhancedDiagnosticResults from './EnhancedDiagnosticResults';
+import { StatisticsService } from '@/lib/statistics';
 
 interface DiagnosticTestProps {
   onComplete: () => void;
@@ -70,7 +71,7 @@ const EnhancedDiagnosticTest = ({ onComplete }: DiagnosticTestProps) => {
       correctAnswer: 0,
       explanation: "3x - 6 > 0 → 3x > 6 → x > 2"
     },
-    
+
     // Geometria - Básico
     {
       id: 4,
@@ -102,7 +103,7 @@ const EnhancedDiagnosticTest = ({ onComplete }: DiagnosticTestProps) => {
       correctAnswer: 2,
       explanation: "V = a³ = 4³ = 64 cm³"
     },
-    
+
     // Funções - Básico
     {
       id: 7,
@@ -124,7 +125,7 @@ const EnhancedDiagnosticTest = ({ onComplete }: DiagnosticTestProps) => {
       correctAnswer: 1,
       explanation: "Funções do tipo f(x) = ax² + bx + c têm gráfico parabólico"
     },
-    
+
     // Estatística - Básico
     {
       id: 9,
@@ -156,11 +157,35 @@ const EnhancedDiagnosticTest = ({ onComplete }: DiagnosticTestProps) => {
     setSelectedAnswer(answerIndex);
   };
 
+  // Função para registrar resposta no backend
+  const recordAnswer = async (question: Question, isCorrect: boolean) => {
+    try {
+      await StatisticsService.recordAnswer({
+        questionId: question.id.toString(),
+        subtopicName: question.competency, // Usando competency como subtopic para diagnóstico aprimorado
+        topicName: question.topic,
+        isCorrect
+      });
+    } catch (error) {
+      console.error('Erro ao registrar resposta do diagnóstico aprimorado:', error);
+      // Não interromper o fluxo se falhar
+    }
+  };
+
   const handleConfirm = () => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = selectedAnswer;
     setAnswers(newAnswers);
-    
+
+    // Registrar resposta no backend se uma resposta foi selecionada
+    if (selectedAnswer !== null) {
+      const currentQ = questions[currentQuestion];
+      const isCorrect = selectedAnswer === currentQ.correctAnswer;
+
+      // Registrar estatística no backend
+      recordAnswer(currentQ, isCorrect);
+    }
+
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
@@ -181,7 +206,7 @@ const EnhancedDiagnosticTest = ({ onComplete }: DiagnosticTestProps) => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = null;
     setAnswers(newAnswers);
-    
+
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
@@ -275,10 +300,10 @@ const EnhancedDiagnosticTest = ({ onComplete }: DiagnosticTestProps) => {
 
   if (showResults) {
     return (
-      <EnhancedDiagnosticResults 
-        answers={answers} 
-        questions={questions} 
-        onComplete={onComplete} 
+      <EnhancedDiagnosticResults
+        answers={answers}
+        questions={questions}
+        onComplete={onComplete}
       />
     );
   }
@@ -339,18 +364,16 @@ const EnhancedDiagnosticTest = ({ onComplete }: DiagnosticTestProps) => {
               <button
                 key={index}
                 onClick={() => handleAnswerSelect(index)}
-                className={`w-full p-4 text-left border-2 rounded-lg transition-all duration-200 ${
-                  selectedAnswer === index
+                className={`w-full p-4 text-left border-2 rounded-lg transition-all duration-200 ${selectedAnswer === index
                     ? 'border-blue-500 bg-blue-50 text-blue-900'
                     : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                    selectedAnswer === index
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedAnswer === index
                       ? 'border-blue-500 bg-blue-500'
                       : 'border-gray-300'
-                  }`}>
+                    }`}>
                     {selectedAnswer === index && (
                       <CheckCircle className="w-4 h-4 text-white" />
                     )}
