@@ -3,17 +3,22 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, Atom, Globe, BookOpen, Lock, PlayCircle, CheckCircle, Target } from 'lucide-react';
+import { Calculator, Atom, Globe, BookOpen, Lock, PlayCircle, CheckCircle, Target, Brain } from 'lucide-react';
 import PersonalizedLearningPaths from './PersonalizedLearningPaths';
 
 interface SubjectTrailsProps {
-  hasCompletedDiagnostic: boolean;
-  onStartDiagnostic: () => void;
+  hasCompletedLevelingTest: boolean;
+  onStartLevelingTest: () => void;
   onStartTraining: () => void;
   onContinueTraining?: () => void;
 }
 
-const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTraining, onContinueTraining }: SubjectTrailsProps) => {
+const SubjectTrails = ({ 
+  hasCompletedLevelingTest,
+  onStartLevelingTest,
+  onStartTraining, 
+  onContinueTraining 
+}: SubjectTrailsProps) => {
   const [showPersonalizedPaths, setShowPersonalizedPaths] = useState(false);
   
   // Verificar se há trilhas personalizadas
@@ -44,50 +49,52 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
       return false;
     }
   })();
-  
+
   const subjects = [
     {
       id: 'math',
       title: 'Matemática',
       description: 'Álgebra, Geometria, Estatística e mais',
       icon: Calculator,
-      available: true,
       color: 'blue',
-      questions: 45
+      questions: '45',
+      available: true,
     },
     {
-      id: 'sciences',
+      id: 'science',
       title: 'Ciências da Natureza',
       description: 'Física, Química e Biologia',
       icon: Atom,
-      available: false,
       color: 'green',
-      questions: 45
+      questions: '45',
+      available: false,
     },
     {
       id: 'humanities',
       title: 'Ciências Humanas',
       description: 'História, Geografia, Filosofia e Sociologia',
       icon: Globe,
+      color: 'orange',
+      questions: '45',
       available: false,
-      color: 'purple',
-      questions: 45
     },
     {
       id: 'languages',
       title: 'Linguagens e Redação',
       description: 'Português, Literatura, Inglês e Redação',
       icon: BookOpen,
+      color: 'purple',
+      questions: '45',
       available: false,
-      color: 'orange',
-      questions: 45
-    }
+    },
   ];
 
-  // Se há trilhas personalizadas e o usuário quer vê-las
-  if (showPersonalizedPaths && hasPersonalizedPaths) {
+  if (showPersonalizedPaths) {
     return (
-      <PersonalizedLearningPaths onStartTraining={onStartTraining} />
+      <PersonalizedLearningPaths 
+        onBack={() => setShowPersonalizedPaths(false)}
+        onStartTraining={onStartTraining}
+      />
     );
   }
 
@@ -112,6 +119,34 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
           </div>
         )}
       </div>
+
+      {/* Seção de Teste de Nivelamento */}
+      {!hasCompletedLevelingTest && (
+        <div className="mb-8">
+          <Card className="border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-orange-600 rounded-full flex items-center justify-center">
+                <Brain className="w-8 h-8 text-white" />
+              </div>
+              <CardTitle className="text-2xl text-orange-800 mb-2">
+                Teste de Nivelamento Necessário
+              </CardTitle>
+              <p className="text-orange-600">
+                Para acessar a apostila dinâmica, você precisa completar o teste de nivelamento primeiro.
+              </p>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button 
+                onClick={onStartLevelingTest}
+                className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3"
+              >
+                <Brain className="w-5 h-5 mr-2" />
+                Iniciar Teste de Nivelamento
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {subjects.map((subject) => {
@@ -173,26 +208,31 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
                   }`}>
                     {subject.questions} questões disponíveis
                   </span>
-                  {subject.id === 'math' && hasCompletedDiagnostic && (
-                    <Badge className="bg-green-100 text-green-800 border-green-200">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Diagnóstico concluído
+                  {subject.id === 'math' && hasCompletedLevelingTest && (
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                      <Brain className="w-3 h-3 mr-1" />
+                      Nivelamento concluído
                     </Badge>
                   )}
                 </div>
                 
                 {subject.id === 'math' && !isLocked && (
                   <Button 
-                    onClick={hasCompletedDiagnostic 
-                      ? (hasActiveTrainingSession && onContinueTraining ? onContinueTraining : onStartTraining)
-                      : onStartDiagnostic
-                    }
+                    onClick={() => {
+                      if (!hasCompletedLevelingTest) {
+                        onStartLevelingTest();
+                      } else {
+                        hasActiveTrainingSession && onContinueTraining ? onContinueTraining() : onStartTraining();
+                      }
+                    }}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <PlayCircle className="w-4 h-4 mr-2" />
-                    {hasCompletedDiagnostic 
-                      ? (hasActiveTrainingSession ? 'Continuar Treinamento' : 'Iniciar Treinamento')
-                      : 'Iniciar Diagnóstico'
+                    {!hasCompletedLevelingTest
+                      ? 'Iniciar Teste de Nivelamento'
+                      : hasActiveTrainingSession 
+                      ? 'Continuar Treinamento' 
+                      : 'Iniciar Treinamento'
                     }
                   </Button>
                 )}
@@ -200,10 +240,10 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
                 {isLocked && (
                   <Button 
                     disabled 
-                    className="w-full bg-gray-200 text-gray-500 cursor-not-allowed"
+                    className="w-full bg-gray-300 text-gray-500 cursor-not-allowed"
                   >
                     <Lock className="w-4 h-4 mr-2" />
-                    Disponível em breve
+                    Em breve
                   </Button>
                 )}
               </CardContent>
@@ -211,25 +251,6 @@ const SubjectTrails = ({ hasCompletedDiagnostic, onStartDiagnostic, onStartTrain
           );
         })}
       </div>
-      
-      {!hasCompletedDiagnostic && (
-        <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">
-              Primeiro acesso? Comece com o diagnóstico!
-            </h3>
-            <p className="text-blue-700 mb-4">
-              O diagnóstico inicial ajuda nossa IA a entender seu nível e personalizar as questões para você.
-            </p>
-            <Button 
-              onClick={onStartDiagnostic}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-            >
-              Fazer Diagnóstico de Matemática
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

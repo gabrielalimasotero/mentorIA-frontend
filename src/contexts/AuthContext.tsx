@@ -230,26 +230,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      console.log('🚀 Iniciando processo de login...');
-      setIsLoading(true);
       const data = await authService.login({ email, password });
-      console.log('✅ Login bem-sucedido, salvando dados:', data);
-      
       tokenUtils.saveToken(data.token);
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
       queryClient.setQueryData(['user'], data.user);
       
-      console.log('💾 Dados salvos, iniciando pré-carregamento...');
+      console.log('💾 Dados salvos, verificando se deve fazer pré-carregamento...');
       
-      // Pré-carregar dados do usuário em background
-      try {
-        await dynamicQuestionsService.preloadUserData();
-        markAsPreloaded();
-        console.log('✅ Pré-carregamento concluído');
-      } catch (preloadError) {
-        console.log('⚠️ Pré-carregamento falhou, mas login continuará');
+      // Só fazer pré-carregamento se o usuário já completou o teste de nivelamento
+      if (data.user.has_completed_leveling_test) {
+        try {
+          await dynamicQuestionsService.preloadUserData();
+          markAsPreloaded();
+          console.log('✅ Pré-carregamento concluído (usuário já completou nivelamento)');
+        } catch (preloadError) {
+          console.log('⚠️ Pré-carregamento falhou, mas login continuará');
+        }
+      } else {
+        console.log('⏭️ Pulando pré-carregamento - usuário ainda não completou teste de nivelamento');
       }
       
       toast({
@@ -282,12 +283,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       queryClient.setQueryData(['user'], data.user);
       
-      // Pré-carregar dados do usuário em background
-      try {
-        await dynamicQuestionsService.preloadUserData();
-        markAsPreloaded();
-      } catch (preloadError) {
-        console.log('⚠️ Pré-carregamento falhou, mas registro continuará');
+      console.log('💾 Dados salvos, verificando se deve fazer pré-carregamento...');
+      
+      // Só fazer pré-carregamento se o usuário já completou o teste de nivelamento
+      if (data.user.has_completed_leveling_test) {
+        try {
+          await dynamicQuestionsService.preloadUserData();
+          markAsPreloaded();
+          console.log('✅ Pré-carregamento concluído (usuário já completou nivelamento)');
+        } catch (preloadError) {
+          console.log('⚠️ Pré-carregamento falhou, mas registro continuará');
+        }
+      } else {
+        console.log('⏭️ Pulando pré-carregamento - usuário ainda não completou teste de nivelamento');
       }
       
       toast({
