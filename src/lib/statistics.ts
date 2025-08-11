@@ -2,23 +2,27 @@ import { api } from './api';
 
 // Interfaces para as estatísticas
 export interface UserStatistics {
-    general: {
-        total_questions: number;
-        total_correct: number;
-        overall_accuracy: number;
-    };
-    by_topic: Array<{
-        topic_name: string;
-        questions_answered: number;
-        correct_answers: number;
-        accuracy_percentage: number;
-    }>;
-    by_competency: Array<{
-        subtopic_name: string;
-        questions_answered: number;
-        correct_answers: number;
-        accuracy_percentage: number;
-    }>;
+  general: {
+    total_questions: number;
+    total_correct: number;
+    overall_accuracy: number;
+    study_streak: number;
+    completed_tests: number;
+  };
+  by_topic: Array<{
+    name: string;
+    questions_answered: number;
+    correct_answers: number;
+    accuracy: number;
+    topic_progress: number;
+  }>;
+  by_competency: Array<{
+    name: string;
+    questions_answered: number;
+    correct_answers: number;
+    accuracy: number;
+    mastery_level: number;
+  }>;
 }
 
 export interface CompetencyStatistics {
@@ -68,14 +72,15 @@ export class StatisticsService {
     }
 
     /**
-     * Obtém estatísticas completas do usuário
+     * Obtém estatísticas do usuário
      */
     static async getUserStatistics(): Promise<UserStatistics> {
         try {
             const response = await api.get('/statistics/user');
+            console.log('🔍 Debug - Response da API /statistics/user:', response.data);
             return response.data.data;
         } catch (error) {
-            console.error('Erro ao obter estatísticas:', error);
+            console.error('Erro ao obter estatísticas do usuário:', error);
             throw error;
         }
     }
@@ -133,29 +138,50 @@ export class StatisticsService {
     }
 
     /**
+     * Obtém todos os tópicos e subtópicos disponíveis na tabela questions
+     */
+    static async getAvailableTopics(): Promise<{ [topicName: string]: string[] }> {
+        try {
+            const response = await api.get('/statistics/available-topics');
+            return response.data.data;
+        } catch (error) {
+            console.error('Erro ao obter tópicos disponíveis:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Obtém estatísticas formatadas para exibição
      */
     static formatStatistics(statistics: UserStatistics) {
+        console.log('🔍 Debug - Statistics recebido:', statistics);
+        console.log('🔍 Debug - statistics.by_topic:', statistics.by_topic);
+        console.log('🔍 Debug - statistics.by_competency:', statistics.by_competency);
+        
+        const byTopic = statistics.by_topic || [];
+        const byCompetency = statistics.by_competency || [];
+        
         return {
             general: {
-                totalQuestions: statistics.general.total_questions,
-                totalCorrect: statistics.general.total_correct,
-                overallAccuracy: statistics.general.overall_accuracy,
-                formattedAccuracy: `${statistics.general.overall_accuracy.toFixed(1)}%`
+                totalQuestions: statistics.general?.total_questions || 0,
+                totalCorrect: statistics.general?.total_correct || 0,
+                overallAccuracy: statistics.general?.overall_accuracy || 0,
+                studyStreak: statistics.general?.study_streak || 0,
+                completedTests: statistics.general?.completed_tests || 0
             },
-            byTopic: statistics.by_topic.map(topic => ({
-                name: topic.topic_name,
-                questionsAnswered: topic.questions_answered,
-                correctAnswers: topic.correct_answers,
-                accuracy: topic.accuracy_percentage,
-                formattedAccuracy: `${topic.accuracy_percentage.toFixed(1)}%`
+            byTopic: byTopic.map(topic => ({
+                name: topic.name || topic.topic_name || '',
+                questionsAnswered: topic.questions_answered || 0,
+                correctAnswers: topic.correct_answers || 0,
+                progress: topic.topic_progress || 0, // Usar topic_progress em vez de accuracy
+                accuracy: topic.accuracy || 0 // Manter accuracy para exibição
             })),
-            byCompetency: statistics.by_competency.map(comp => ({
-                name: comp.subtopic_name,
-                questionsAnswered: comp.questions_answered,
-                correctAnswers: comp.correct_answers,
-                accuracy: comp.accuracy_percentage,
-                formattedAccuracy: `${comp.accuracy_percentage.toFixed(1)}%`
+            byCompetency: byCompetency.map(comp => ({
+                name: comp.name || comp.subtopic_name || '',
+                questionsAnswered: comp.questions_answered || 0,
+                correctAnswers: comp.correct_answers || 0,
+                progress: comp.accuracy || 0,
+                masteryLevel: comp.mastery_level || 0
             }))
         };
     }
@@ -167,6 +193,16 @@ export class StatisticsService {
         if (accuracy >= 80) return 'advanced';
         if (accuracy >= 60) return 'intermediate';
         return 'beginner';
+    }
+
+    /**
+     * Calcula o nível de domínio numérico (0, 1, 2, 3)
+     */
+    static getMasteryLevelNumber(accuracy: number): 0 | 1 | 2 | 3 {
+        if (accuracy >= 76) return 3; // Dominado
+        if (accuracy >= 51) return 2; // Intermediário
+        if (accuracy >= 26) return 1; // Básico
+        return 0; // Iniciante
     }
 
     /**
@@ -200,6 +236,25 @@ export class StatisticsService {
                 return '📚';
             default:
                 return '❓';
+        }
+    }
+
+    /**
+     * Obtém cor da barra de progresso baseada no nível
+     */
+    static getProgressBarColor(accuracy: number): string {
+        const level = this.getMasteryLevelNumber(accuracy);
+        switch (level) {
+            case 3:
+                return 'bg-green-500';
+            case 2:
+                return 'bg-yellow-500';
+            case 1:
+                return 'bg-orange-500';
+            case 0:
+                return 'bg-red-500';
+            default:
+                return 'bg-gray-500';
         }
     }
 } 
