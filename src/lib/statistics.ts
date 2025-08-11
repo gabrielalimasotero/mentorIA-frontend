@@ -268,12 +268,14 @@ export class StatisticsService {
         date: string;
     }> {
         try {
+            console.log('📊 StatisticsService.registerDailyStudy chamado com:', questionsCount);
             const response = await api.post('/statistics/register-daily-study', {
                 questionsCount
             });
+            console.log('📊 Resposta do registerDailyStudy:', response.data);
             return response.data.data;
         } catch (error) {
-            console.error('Erro ao registrar estudo diário:', error);
+            console.error('❌ Erro ao registrar estudo diário:', error);
             throw error;
         }
     }

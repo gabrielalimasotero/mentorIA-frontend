@@ -132,10 +132,13 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       setSelectedAnswer(null);
       setAnswers(new Array(session.questions.length).fill(null));
 
+      // Preservar o progresso anterior
+      const savedProgress = JSON.parse(localStorage.getItem('training_progress') || '{}');
       const sessionData = {
         date: new Date().toDateString(),
         sessionId: session.sessionId,
         questions: session.questions,
+        completed: savedProgress.completed || 0, // Preservar progresso anterior
         currentSession: {
           currentQuestion: 0,
           answers: new Array(session.questions.length).fill(null)
@@ -143,7 +146,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       };
       localStorage.setItem('training_progress', JSON.stringify(sessionData));
 
-      console.log('✅ Nova sessão carregada com sucesso');
+      console.log('✅ Nova sessão carregada com sucesso, progresso preservado:', savedProgress.completed || 0);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar nova sessão');
       console.error('Erro ao carregar nova sessão:', err);
@@ -168,10 +171,13 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       setSelectedAnswer(null);
       setAnswers(new Array(session.questions.length).fill(null));
 
+      // Preservar o progresso anterior se existir
+      const savedProgress = JSON.parse(localStorage.getItem('training_progress') || '{}');
       const sessionData = {
         date: new Date().toDateString(),
         sessionId: session.sessionId,
         questions: session.questions,
+        completed: savedProgress.completed || 0, // Preservar progresso anterior
         currentSession: {
           currentQuestion: 0,
           answers: new Array(session.questions.length).fill(null)
@@ -179,7 +185,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       };
       localStorage.setItem('training_progress', JSON.stringify(sessionData));
 
-      console.log('✅ Sessão carregada com sucesso (otimizada)');
+      console.log('✅ Sessão carregada com sucesso (otimizada), progresso preservado:', savedProgress.completed || 0);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar sessão');
       console.error('Erro ao carregar sessão:', err);
@@ -262,10 +268,16 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
         await dynamicQuestionsService.completeSession(allAnswers);
 
         const completedToday = dailyProgress + questions.length;
+        console.log('📊 Calculando estudo diário:', {
+          dailyProgress,
+          questionsLength: questions.length,
+          completedToday
+        });
         setDailyProgress(completedToday);
 
         // Registrar estudo diário no backend
         try {
+          console.log('📊 Chamando registerDailyStudy com:', completedToday);
           const studyResult = await StatisticsService.registerDailyStudy(completedToday);
           console.log('📊 Estudo diário registrado:', studyResult);
           
