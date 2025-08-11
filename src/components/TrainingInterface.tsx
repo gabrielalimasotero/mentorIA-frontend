@@ -97,12 +97,12 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       setGoalsMet(parseInt(savedGoals));
     }
 
-    // Se não há sessão ativa, iniciar treinamento automaticamente
+    // Se não há sessão ativa, NÃO iniciar automaticamente - aguardar usuário clicar
     if (!savedProgress || JSON.parse(savedProgress || '{}').date !== new Date().toDateString()) {
-      console.log('🚀 Iniciando treinamento automaticamente...');
-      startTraining();
+      console.log('⏸️ Nenhum progresso encontrado, aguardando usuário iniciar...');
+      // Não iniciar automaticamente - deixar usuário clicar no botão
     } else {
-      console.log('⏸️ Sessão ativa encontrada, não iniciando automaticamente');
+      console.log('⏸️ Sessão ativa encontrada, verificando se deve continuar...');
 
       const progress = JSON.parse(savedProgress);
       if (!progress.currentSession && progress.completed && progress.completed > 0) {
@@ -264,18 +264,35 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
         const completedToday = dailyProgress + questions.length;
         setDailyProgress(completedToday);
 
+        // Registrar estudo diário no backend
+        try {
+          const studyResult = await StatisticsService.registerDailyStudy(completedToday);
+          console.log('📊 Estudo diário registrado:', studyResult);
+          
+          // Atualizar metas se completou o objetivo diário
+          if (completedToday >= 20) {
+            setGoalsMet(prev => prev + 1);
+            localStorage.setItem('user_goals', (goalsMet + 1).toString());
+            setShowDailyComplete(true);
+          } else {
+            setShowResults(true);
+          }
+        } catch (error) {
+          console.error('❌ Erro ao registrar estudo diário:', error);
+          // Continuar mesmo se falhar o registro
+          if (completedToday >= 20) {
+            setGoalsMet(prev => prev + 1);
+            localStorage.setItem('user_goals', (goalsMet + 1).toString());
+            setShowDailyComplete(true);
+          } else {
+            setShowResults(true);
+          }
+        }
+
         const savedProgress = JSON.parse(localStorage.getItem('training_progress') || '{}');
         savedProgress.completed = completedToday;
         delete savedProgress.currentSession;
         localStorage.setItem('training_progress', JSON.stringify(savedProgress));
-
-        if (completedToday >= 20) {
-          setGoalsMet(prev => prev + 1);
-          localStorage.setItem('user_goals', (goalsMet + 1).toString());
-          setShowDailyComplete(true);
-        } else {
-          setShowResults(true);
-        }
       }
     } catch (err) {
       console.error('❌ Erro ao processar questão:', err);

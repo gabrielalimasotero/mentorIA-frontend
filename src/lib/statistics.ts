@@ -257,4 +257,24 @@ export class StatisticsService {
                 return 'bg-gray-500';
         }
     }
+
+    /**
+     * Registra estudo diário do usuário
+     */
+    static async registerDailyStudy(questionsCount: number = 0): Promise<{
+        current_streak: number;
+        questions_completed: number;
+        completed_daily_goal: boolean;
+        date: string;
+    }> {
+        try {
+            const response = await api.post('/statistics/register-daily-study', {
+                questionsCount
+            });
+            return response.data.data;
+        } catch (error) {
+            console.error('Erro ao registrar estudo diário:', error);
+            throw error;
+        }
+    }
 } 

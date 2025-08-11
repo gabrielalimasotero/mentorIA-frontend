@@ -16,27 +16,45 @@ const Dashboard = () => {
   const [currentView, setCurrentView] = useState<CurrentView>('trails');
   const [forceContinueTraining, setForceContinueTraining] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
   // Verificar status do teste de nivelamento
   useEffect(() => {
     const checkLevelingTestStatus = async () => {
       try {
-        const token = localStorage.getItem('auth_token');
-        if (!token) return;
+        console.log('🔍 Dashboard - Verificando status do teste de nivelamento...');
+        const token = localStorage.getItem('token');
+        console.log('🔑 Token encontrado:', !!token);
+        
+        if (!token) {
+          console.log('❌ Token não encontrado');
+          return;
+        }
 
-        const response = await fetch(`${API_URL}/leveling-test/status`, {
+        const url = `${API_URL}/leveling-test/status`;
+        console.log('🌐 Fazendo requisição para:', url);
+        
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         });
 
+        console.log('📊 Status da resposta:', response.status);
+        console.log('📊 Headers da resposta:', Object.fromEntries(response.headers.entries()));
+
         if (response.ok) {
           const data = await response.json();
+          console.log('✅ Dados recebidos:', data);
           setHasCompletedLevelingTest(data.data.hasCompletedLevelingTest);
+          console.log('🎯 hasCompletedLevelingTest definido como:', data.data.hasCompletedLevelingTest);
+        } else {
+          console.error('❌ Resposta não ok:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('❌ Erro detalhado:', errorText);
         }
       } catch (error) {
-        console.error('Erro ao verificar status do teste de nivelamento:', error);
+        console.error('❌ Erro ao verificar status do teste de nivelamento:', error);
       }
     };
 
@@ -45,11 +63,12 @@ const Dashboard = () => {
 
   // Definir view inicial baseado no status do teste de nivelamento
   useEffect(() => {
-    if (hasCompletedLevelingTest) {
-      setCurrentView('training');
-    } else {
-      setCurrentView('trails');
-    }
+    console.log('🔄 Dashboard - hasCompletedLevelingTest mudou para:', hasCompletedLevelingTest);
+    // Sempre começar na tela de trilhas, independente do status do nivelamento
+    console.log('🎯 Sempre começando na view: trails');
+    setCurrentView('trails');
+    // Garantir que não force continuação automaticamente
+    setForceContinueTraining(false);
   }, [hasCompletedLevelingTest]);
 
   // Resetar forceContinueTraining quando sair da view de training
@@ -79,6 +98,7 @@ const Dashboard = () => {
   const handleLevelingTestComplete = () => {
     setHasCompletedLevelingTest(true);
     setCurrentView('training'); // Ir para treinamento após teste de nivelamento
+    // Não forçar continuação - deixar usuário escolher
   };
 
   const handleLogout = async () => {
