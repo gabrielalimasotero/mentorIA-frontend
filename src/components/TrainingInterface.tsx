@@ -186,7 +186,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
     } finally {
       setLoading(false);
     }
-  ];
+  };
 
   // Função para registrar resposta no backend
   const recordAnswer = async (question: DynamicQuestion, isCorrect: boolean) => {
