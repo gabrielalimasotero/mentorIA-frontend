@@ -5,9 +5,12 @@ export const authService = {
   // Login do usuário
   async login(credentials: LoginRequest): Promise<{ user: User; token: string }> {
     try {
+      console.log('🔍 authService.login - Iniciando requisição...');
       const response = await api.post<ApiResponse<User>>('/auth/login', credentials);
+      console.log('✅ authService.login - Resposta recebida:', response.data);
       
       if (!response.data.user || !response.data.token) {
+        console.error('❌ authService.login - Resposta inválida:', response.data);
         throw new Error('Resposta inválida do servidor');
       }
 
@@ -16,26 +19,59 @@ export const authService = {
         token: response.data.token
       };
     } catch (error: any) {
+      console.error('❌ authService.login - Erro capturado:', error);
+      console.error('❌ authService.login - Status:', error.response?.status);
+      console.error('❌ authService.login - Data:', error.response?.data);
+      
       if (error.response?.status === 401) {
+        console.log('🔍 authService.login - Status 401, credenciais inválidas');
         throw new Error('Senha incorreta. Por favor, verifique suas credenciais.');
       }
       if (error.message === 'Network Error') {
+        console.log('🔍 authService.login - Erro de rede');
         throw new Error('Erro de conexão com o servidor. Por favor, tente novamente.');
       }
       if (error.response?.data?.message) {
+        console.log('🔍 authService.login - Usando mensagem do backend:', error.response.data.message);
         throw new Error(error.response.data.message);
       }
+      console.log('🔍 authService.login - Usando mensagem padrão');
       throw new Error('Erro ao fazer login. Tente novamente.');
     }
   },
 
   // Registro de novo usuário
   async register(userData: RegisterRequest): Promise<{ user: User; token: string }> {
-    const response = await api.post<ApiResponse<User>>('/auth/register', userData);
-    return {
-      user: response.data.user!,
-      token: response.data.token!
-    };
+    try {
+      console.log('🔍 authService.register - Iniciando requisição...');
+      const response = await api.post<ApiResponse<User>>('/auth/register', userData);
+      console.log('✅ authService.register - Resposta recebida:', response.data);
+      
+      if (!response.data.user || !response.data.token) {
+        console.error('❌ authService.register - Resposta inválida:', response.data);
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      return {
+        user: response.data.user,
+        token: response.data.token
+      };
+    } catch (error: any) {
+      console.error('❌ authService.register - Erro capturado:', error);
+      console.error('❌ authService.register - Status:', error.response?.status);
+      console.error('❌ authService.register - Data:', error.response?.data);
+      
+      if (error.message === 'Network Error') {
+        console.log('🔍 authService.register - Erro de rede');
+        throw new Error('Erro de conexão com o servidor. Por favor, tente novamente.');
+      }
+      if (error.response?.data?.message) {
+        console.log('🔍 authService.register - Usando mensagem do backend:', error.response.data.message);
+        throw new Error(error.response.data.message);
+      }
+      console.log('🔍 authService.register - Usando mensagem padrão');
+      throw new Error('Erro ao criar conta. Tente novamente.');
+    }
   },
 
   // Logout do usuário

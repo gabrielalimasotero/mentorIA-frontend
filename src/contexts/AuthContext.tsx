@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User } from '@/lib/api';
 import { authService, tokenUtils, userUtils } from '@/lib/auth';
 import { dynamicQuestionsService } from '@/lib/dynamic-questions';
@@ -8,7 +8,7 @@ import { usePreloadStatus } from '@/hooks/use-preload-status';
 
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
+  isLoading: boolean; // Representa apenas loading de registro
   isAuthenticated: boolean;
   setIsAuthenticated: (value: boolean) => void;
   login: (email: string, password: string) => Promise<void>;
@@ -33,111 +33,61 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Estado inicial baseado apenas no localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return tokenUtils.isAuthenticated();
+    const hasToken = tokenUtils.isAuthenticated();
+    const hasUser = userUtils.getUser();
+    const result = hasToken && hasUser;
+    console.log('🔍 AuthProvider - Estado inicial:', { hasToken, hasUser, result });
+    return result;
   });
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const [user, setUser] = useState<User | null>(() => {
+    const userData = userUtils.getUser();
+    console.log('🔍 AuthProvider - User inicial:', userData);
+    return userData;
+  });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { markAsPreloaded, isPreloaded } = usePreloadStatus();
 
-  // Query para buscar dados do usuário atual
-  const { data: user, error, refetch } = useQuery({
-    queryKey: ['user'],
-    queryFn: async () => {
-      try {
-        const userData = await authService.getCurrentUser();
-        return userData;
-      } catch (error: any) {
-        console.error('Erro ao buscar dados do usuário:', error);
-        if (error.response?.status === 401) {
-          handleLogout();
-        }
-        throw error;
+  // 🔍 DIAGNÓSTICO - Proteção contra mudanças suspeitas
+  const prevAuthState = useRef({ isAuthenticated, user });
+  
+  useEffect(() => {
+    const currentState = { isAuthenticated, user };
+    const prevState = prevAuthState.current;
+    
+    if (prevState.isAuthenticated !== isAuthenticated || prevState.user !== user) {
+      console.log('🔍 AuthProvider - Mudança de estado detectada:', {
+        prev: { isAuthenticated: prevState.isAuthenticated, hasUser: !!prevState.user },
+        current: { isAuthenticated, hasUser: !!user },
+        stack: new Error().stack
+      });
+      
+      // 🔍 ALERTA - Reset suspeito
+      if (prevState.isAuthenticated && !isAuthenticated && prevState.user && !user) {
+        console.error('🚨 ALERTA CRÍTICO: Reset completo no AuthProvider!');
+        console.error('🚨 Stack trace completo:', new Error().stack);
       }
-    },
-    enabled: isAuthenticated,
-    retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-  });
+    }
+    
+    prevAuthState.current = currentState;
+  }, [isAuthenticated, user]);
 
   // Função centralizada para fazer logout
   const handleLogout = () => {
+    console.log('🔍 AuthProvider.handleLogout - Iniciando logout...');
     userUtils.clearAllAuthData();
     setIsAuthenticated(false);
-    setIsLoading(false);
+    setUser(null);
     queryClient.clear();
+    console.log('🔍 AuthProvider.handleLogout - Logout concluído');
   };
 
-  // Verificar autenticação na inicialização
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        console.log('🔍 Verificando autenticação na inicialização...');
-        const hasToken = tokenUtils.isAuthenticated();
-
-        if (!hasToken) {
-          console.log('❌ Sem token, fazendo logout');
-          handleLogout();
-          return;
-        }
-
-        // Se tem token, verificar se é válido
-        try {
-          const userData = await authService.getCurrentUser();
-          queryClient.setQueryData(['user'], userData);
-          setIsAuthenticated(true);
-        } catch (error: any) {
-          if (error.response?.status === 401) {
-            handleLogout();
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        handleLogout();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [queryClient]);
-
-  // Mutation para login
-  const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      return await authService.login({ email, password });
-    },
-    onSuccess: (data) => {
-      // Limpar dados antigos antes de salvar novos
-      userUtils.clearAllAuthData();
-      
-      // Salvar novos dados
-      tokenUtils.saveToken(data.token);
-      userUtils.saveUser(data.user);
-      setIsAuthenticated(true);
-      queryClient.setQueryData(['user'], data.user);
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-      toast({
-        title: 'Login realizado com sucesso!',
-        description: `Bem-vindo(a), ${data.user.name}!`,
-      });
-    },
-    onError: (error: any) => {
-      tokenUtils.clearToken();
-      userUtils.clearUser();
-      setIsAuthenticated(false);
-      queryClient.clear();
-
-      const errorMessage = error.response?.data?.message || error.message || 'Erro ao fazer login';
-
-      toast({
-        title: 'Erro no login',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    },
-  });
+  // Mutation para login (REMOVIDA - usando função login diretamente)
+  // A mutation estava causando logout automático em caso de erro
 
   // Mutation para registro
   const registerMutation = useMutation({
@@ -157,8 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       tokenUtils.saveToken(data.token);
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
-      queryClient.setQueryData(['user'], data.user);
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      setUser(data.user);
       toast({
         title: 'Conta criada com sucesso!',
         description: `Bem-vindo(a), ${data.user.name}!`,
@@ -192,13 +141,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
+    console.log('🔍 AuthContext.login - Iniciando login...');
+    
+    // IMPORTANTE: Não alterar isLoading aqui para evitar "piscar"
+    // O isLoading será controlado apenas pela LoginPage
+    
     try {
       const data = await authService.login({ email, password });
+      console.log('✅ AuthContext.login - Login bem-sucedido, salvando dados...');
+      
+      // Limpar dados antigos antes de salvar novos
+      userUtils.clearAllAuthData();
+      
+      // Salvar novos dados
       tokenUtils.saveToken(data.token);
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
-      queryClient.setQueryData(['user'], data.user);
+      setUser(data.user);
       
       console.log('💾 Dados salvos, verificando se deve fazer pré-carregamento...');
       
@@ -222,28 +181,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       console.log('🎉 Login finalizado com sucesso');
     } catch (error: any) {
-      console.error('❌ Erro no login:', error);
-      // Limpar dados de autenticação
-      handleLogout();
+      console.error('❌ AuthContext.login - Erro capturado:', error);
+      
+      // IMPORTANTE: NÃO fazer logout automático em caso de credenciais inválidas
+      // Isso evita o "piscar" da tela
+      console.log('🔍 AuthContext.login - Mantendo estado atual, não fazendo logout...');
       
       // Propagar o erro com a mensagem do backend
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       }
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const register = async (name: string, email: string, password: string, birthDate: string, institution: string) => {
-    setIsLoading(true);
+    // Não controlar loading aqui - será controlado pela LoginPage
     try {
       const data = await authService.register({ name, email, password, birthDate, institution });
       tokenUtils.saveToken(data.token);
       userUtils.saveUser(data.user);
       setIsAuthenticated(true);
-      queryClient.setQueryData(['user'], data.user);
+      setUser(data.user);
       
       console.log('💾 Dados salvos, verificando se deve fazer pré-carregamento...');
       
@@ -272,8 +231,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         variant: 'destructive',
       });
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -296,12 +253,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refetchUser = async () => {
-    await refetch();
+    try {
+      const userData = await authService.getCurrentUser();
+      setUser(userData);
+    } catch (error) {
+      console.error('Erro ao buscar dados do usuário:', error);
+      if (error.response?.status === 401) {
+        handleLogout();
+      }
+    }
   };
 
   const value: AuthContextType = {
-    user: user || null,
-    isLoading: isLoading || loginMutation.isPending || registerMutation.isPending,
+    user: user,
+    isLoading: registerMutation.isPending, // Removido isInitializing
     isAuthenticated,
     setIsAuthenticated,
     login,

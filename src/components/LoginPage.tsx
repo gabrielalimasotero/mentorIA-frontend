@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Brain, Mail, Lock, User, ArrowRight, Eye, EyeOff, Calendar, Building, BookOpen, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+
+
 
 // Schemas de validação
 const loginSchema = z.object({
@@ -37,25 +39,21 @@ type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-const LoginPage = () => {
+const LoginPage: React.FC = () => {
+  const { login, register, forgotPassword, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-
-  const { login, register, forgotPassword, isLoading, isAuthenticated, user } = useAuth();
-
-  // Redirecionar se já estiver autenticado
-  useEffect(() => {
-    console.log('🔍 LoginPage useEffect - Estado atual:', { isAuthenticated, user, isLoading });
-    
-    if (isAuthenticated && user) {
-      console.log('✅ Usuário autenticado, redirecionando para dashboard...');
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, user, navigate]);
+  
+  // Verificar se o usuário já está autenticado
+  if (isAuthenticated && user) {
+    navigate('/dashboard');
+    return null;
+  }
 
   // Formulário de login
   const loginForm = useForm<LoginFormData>({
@@ -75,39 +73,23 @@ const LoginPage = () => {
   const handleLogin = async (data: LoginFormData) => {
     if (isLoading) return; // Evita múltiplos cliques
 
+    setIsLoading(true);
     try {
       setLoginError(null);
       loginForm.clearErrors();
       await login(data.email, data.password);
-      // Se o login for bem sucedido, será redirecionado pelo useEffect
     } catch (error: any) {
       console.error('Erro no login:', error);
-      // Usar a mensagem do backend ou uma mensagem padrão
-      const errorMessage = error.response?.data?.message || error.message || 'Email ou senha incorretos';
-      setLoginError(errorMessage);
-
-      // Mostrar o erro nos campos
-      if (errorMessage.toLowerCase().includes('senha')) {
-        loginForm.setError('password', {
-          type: 'manual',
-          message: errorMessage
-        });
-      } else {
-        loginForm.setError('email', {
-          type: 'manual',
-          message: errorMessage
-        });
-        loginForm.setError('password', {
-          type: 'manual',
-          message: errorMessage
-        });
-      }
+      setLoginError(error.message || 'Erro ao fazer login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRegister = async (data: RegisterFormData) => {
     if (isLoading) return; // Evita múltiplos cliques
 
+    setIsLoading(true);
     try {
       setLoginError(null);
       registerForm.clearErrors();
@@ -115,15 +97,20 @@ const LoginPage = () => {
     } catch (error: any) {
       console.error('Erro no registro:', error);
       setLoginError(error.message || 'Erro ao criar conta');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleForgotPassword = async (data: ForgotPasswordFormData) => {
+    setIsLoading(true);
     try {
       await forgotPassword(data.email);
       setShowForgotPassword(false);
     } catch (error) {
       // Erro já tratado no contexto
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -132,12 +119,33 @@ const LoginPage = () => {
     console.log(`Login com ${provider} - Implementar`);
   };
 
-  // Limpar erro quando mudar de login para registro e vice-versa
-  useEffect(() => {
-    setLoginError(null);
-    loginForm.clearErrors();
-    registerForm.clearErrors();
-  }, [isSignUp]);
+  // 🔍 DIAGNÓSTICO - Limpar erro apenas quando mudar de login para registro (REMOVIDO)
+  // useEffect(() => {
+  //   console.log('🔍 Mudança de modo (login/registro):', isSignUp);
+  //   // Só limpar erros quando mudar de modo, não durante o login
+  //   setLoginError(null);
+  //   loginForm.clearErrors();
+  //   registerForm.clearErrors();
+  // }, [isSignUp]);
+
+  // 🔍 DIAGNÓSTICO - Monitorar mudanças no estado de autenticação (REMOVIDO)
+  // useEffect(() => {
+  //   console.log('🔍 LoginPage - Mudança no estado de autenticação:', { isAuthenticated, user });
+  //   
+  //   // 🔍 PROTEÇÃO: Só limpar erros se realmente estiver autenticado
+  //   if (isAuthenticated && user) {
+  //     console.log('✅ Usuário autenticado, limpando erros...');
+  //     setLoginError(null);
+  //     loginForm.clearErrors();
+  //   }
+  //   
+  //   // 🔍 PROTEÇÃO: NÃO fazer NADA quando não está autenticado
+  //   // Isso evita qualquer mudança de estado que possa causar reset
+  //   if (!isAuthenticated && !user) {
+  //     console.log('🔍 Usuário não autenticado, mantendo estado atual...');
+  //     // NÃO limpar erros aqui - isso estava causando o reset!
+  //   }
+  // }, [isAuthenticated, user]);
 
   if (showForgotPassword) {
     return (
@@ -197,7 +205,8 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center pb-8">
           <div className="w-16 h-16 mx-auto mb-4 bg-blue-700 rounded-2xl flex items-center justify-center">
@@ -462,31 +471,24 @@ const LoginPage = () => {
             <span className="text-gray-600">
               {isSignUp ? 'Já tem uma conta?' : 'Não tem uma conta?'}
             </span>
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="ml-1 text-blue-700 hover:text-blue-800 font-medium"
-            >
-              {isSignUp ? 'Entrar' : 'Cadastre-se'}
-            </button>
+                         <button
+               type="button"
+               onClick={() => {
+                 setIsSignUp(!isSignUp);
+                 // Limpar erros apenas quando o usuário mudar de modo manualmente
+                 setLoginError(null);
+                 loginForm.clearErrors();
+                 registerForm.clearErrors();
+               }}
+               className="ml-1 text-blue-700 hover:text-blue-800 font-medium"
+             >
+               {isSignUp ? 'Entrar' : 'Cadastre-se'}
+             </button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Botão flutuante para limpar cache no canto inferior direito */}
-      <button
-        onClick={() => {
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.reload();
-        }}
-        className="fixed bottom-4 right-4 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-        title="Limpar Cache (Desenvolvimento)"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      </button>
+       
     </div>
   );
 };

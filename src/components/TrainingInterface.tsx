@@ -207,7 +207,7 @@ const TrainingInterface = ({ onContinueTraining, forceContinueTraining }: Traini
       options: ["5", "6", "7", "8"],
       correctAnswer: 1
     }
-  };
+  ];
 
   // Função para registrar resposta no backend
   const recordAnswer = async (question: TrainingQuestion, isCorrect: boolean) => {

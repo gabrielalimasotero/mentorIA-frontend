@@ -50,9 +50,11 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         // Se o refresh falhar, limpar tokens e redirecionar para login
+        // 🔍 PROTEÇÃO: NÃO redirecionar automaticamente - deixar o componente decidir
+        console.log('🔍 Interceptor: Refresh falhou, mas NÃO redirecionando automaticamente');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/';
+        // window.location.href = '/'; // 🔍 REMOVIDO - estava causando reset da tela
         return Promise.reject(refreshError);
       }
     }
