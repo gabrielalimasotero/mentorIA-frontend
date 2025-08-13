@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/components/LoginPage";
 import Dashboard from "@/components/Dashboard";
 import StatisticsPage from "@/components/StatisticsPage";
+import ResetPasswordPage from "@/components/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -30,6 +31,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<LoginPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route
                 path="/dashboard"
                 element={
