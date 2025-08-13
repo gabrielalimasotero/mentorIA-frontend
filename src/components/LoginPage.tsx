@@ -16,13 +16,15 @@ import { useAuth } from '@/contexts/AuthContext';
 // Schemas de validação
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
 });
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  password: z.string()
+    .min(8, 'Senha deve ter pelo menos 8 caracteres')
+    .regex(/^(?=.*[A-Za-z])(?=.*\d)/, 'Senha deve conter pelo menos uma letra e um número'),
   confirmPassword: z.string(),
   birthDate: z.string().min(1, 'Data de nascimento é obrigatória'),
   institution: z.string().min(1, 'Instituição é obrigatória'),
@@ -114,9 +116,90 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    // TODO: Implementar login social
-    console.log(`Login com ${provider} - Implementar`);
+  const handleSocialLogin = async (provider: string) => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    setLoginError(null);
+
+    try {
+      if (provider === 'Google') {
+        await handleGoogleLogin();
+      } else if (provider === 'Facebook') {
+        // TODO: Implementar Facebook
+        console.log('Facebook login - Implementar');
+      }
+    } catch (error: any) {
+      console.error(`Erro no login com ${provider}:`, error);
+      setLoginError(error.message || `Erro ao fazer login com ${provider}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      // DEBUG: Verificar variáveis de ambiente
+      console.log('🔍 DEBUG - VITE_GOOGLE_CLIENT_ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
+      console.log('🔍 DEBUG - VITE_API_URL:', import.meta.env.VITE_API_URL);
+      console.log('🔍 DEBUG - Todas as variáveis:', import.meta.env);
+      
+      if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        throw new Error('VITE_GOOGLE_CLIENT_ID não está definido!');
+      }
+
+      // Carregar Google Identity Services
+      if (!window.google) {
+        throw new Error('Google Identity Services não carregado');
+      }
+
+      // Configurar Google Sign-In
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: 'email profile',
+        callback: async (response: any) => {
+          if (response.error) {
+            throw new Error('Erro na autenticação Google');
+          }
+
+          try {
+            // Enviar token para o backend
+            const backendResponse = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                idToken: response.access_token,
+              }),
+            });
+
+            const data = await backendResponse.json();
+
+            if (!backendResponse.ok) {
+              throw new Error(data.msg || 'Erro no servidor');
+            }
+
+            // Login bem-sucedido
+            console.log('Login Google bem-sucedido:', data);
+            
+            // TODO: Atualizar contexto de autenticação
+            // await login(data.data.user, data.data.token);
+            
+          } catch (error: any) {
+            console.error('Erro ao processar login Google:', error);
+            setLoginError(error.message || 'Erro ao processar login Google');
+          }
+        },
+      });
+
+      // Solicitar token
+      client.requestAccessToken();
+
+    } catch (error: any) {
+      console.error('Erro ao inicializar Google Login:', error);
+      throw error;
+    }
   };
 
   // 🔍 DIAGNÓSTICO - Limpar erro apenas quando mudar de login para registro (REMOVIDO)
@@ -453,18 +536,7 @@ const LoginPage: React.FC = () => {
               Continuar com Google
             </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-gray-300 hover:bg-gray-50"
-              onClick={() => handleSocialLogin('Facebook')}
-              disabled={isLoading}
-            >
-              <svg className="w-4 h-4 mr-2" fill="#1877F2" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-              Continuar com Facebook
-            </Button>
+
           </div>
 
           <div className="text-center">
