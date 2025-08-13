@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Login Callback</title>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h2>Processando login...</h2>
+        <p>Por favor, aguarde enquanto processamos seu login.</p>
+    </div>
+
+    <script>
+        // Extrair o código de autorização da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        if (code) {
+            // Redirecionar de volta para a página principal com o código
+            const redirectUrl = `${window.location.origin}?google_code=${encodeURIComponent(code)}`;
+            window.location.href = redirectUrl;
+        } else if (error) {
+            // Redirecionar de volta com erro
+            const redirectUrl = `${window.location.origin}?google_error=${encodeURIComponent(error)}`;
+            window.location.href = redirectUrl;
+        } else {
+            // Nenhum código ou erro encontrado
+            const redirectUrl = `${window.location.origin}?google_error=${encodeURIComponent('Nenhum código de autorização recebido')}`;
+            window.location.href = redirectUrl;
+        }
+    </script>
+</body>
+</html>

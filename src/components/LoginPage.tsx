@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,8 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Brain, Mail, Lock, User, ArrowRight, Eye, EyeOff, Calendar, Building, BookOpen, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-
-
 
 // Schemas de validação
 const loginSchema = z.object({
@@ -42,7 +40,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 const LoginPage: React.FC = () => {
-  const { login, register, forgotPassword, isAuthenticated, user } = useAuth();
+  const { login, loginWithGoogle, register, forgotPassword, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -50,12 +48,90 @@ const LoginPage: React.FC = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Verificar se o Google Identity Services carregou
+  useEffect(() => {
+    console.log('🔍 DEBUG - window.google:', window.google);
+    console.log('🔍 DEBUG - Google Identity Services carregado:', !!window.google);
+  }, []);
+
+  // Capturar código de autorização do Google quando retornar
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleCode = urlParams.get('google_code');
+    const googleError = urlParams.get('google_error');
+
+    if (googleCode) {
+      console.log('🔍 Código de autorização do Google recebido:', googleCode);
+      
+      // Processar o código
+      const processGoogleCode = async () => {
+        try {
+          setIsLoading(true);
+          setLoginError(null);
+
+          // Enviar código para o backend
+          const backendResponse = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              code: googleCode,
+              redirectUri: `${window.location.origin}/google-callback.html`,
+            }),
+          });
+
+          const data = await backendResponse.json();
+          console.log('🔍 Resposta do backend:', data);
+
+          if (!backendResponse.ok) {
+            throw new Error(data.msg || 'Erro no servidor');
+          }
+
+          // Login bem-sucedido
+          console.log('✅ Login Google bem-sucedido:', data);
+          
+          // Atualizar contexto de autenticação
+          if (data.data && data.data.user && data.data.token) {
+            await loginWithGoogle(data.data.user, data.data.token);
+            console.log('✅ Contexto de autenticação atualizado');
+          } else {
+            console.error('❌ Dados de usuário ou token não encontrados na resposta');
+            throw new Error('Dados de autenticação inválidos');
+          }
+          
+          // Limpar URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+        } catch (error: any) {
+          console.error('❌ Erro ao processar login Google:', error);
+          setLoginError(error.message || 'Erro ao processar login Google');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      processGoogleCode();
+    } else if (googleError) {
+      console.error('❌ Erro do Google OAuth:', googleError);
+      setLoginError(`Erro do Google: ${googleError}`);
+      
+      // Limpar URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [loginWithGoogle]);
   
   // Verificar se o usuário já está autenticado
-  if (isAuthenticated && user) {
-    navigate('/dashboard');
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated && user && !isRedirecting) {
+      setIsRedirecting(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
+    }
+  }, [isAuthenticated, user, navigate, isRedirecting]);
 
   // Formulário de login
   const loginForm = useForm<LoginFormData>({
@@ -116,119 +192,17 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: string) => {
-    if (isLoading) return;
-
-    setIsLoading(true);
-    setLoginError(null);
-
-    try {
-      if (provider === 'Google') {
-        await handleGoogleLogin();
-      } else if (provider === 'Facebook') {
-        // TODO: Implementar Facebook
-        console.log('Facebook login - Implementar');
-      }
-    } catch (error: any) {
-      console.error(`Erro no login com ${provider}:`, error);
-      setLoginError(error.message || `Erro ao fazer login com ${provider}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      // DEBUG: Verificar variáveis de ambiente
-      console.log('🔍 DEBUG - VITE_GOOGLE_CLIENT_ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
-      console.log('🔍 DEBUG - VITE_API_URL:', import.meta.env.VITE_API_URL);
-      console.log('🔍 DEBUG - Todas as variáveis:', import.meta.env);
-      
-      if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        throw new Error('VITE_GOOGLE_CLIENT_ID não está definido!');
-      }
-
-      // Carregar Google Identity Services
-      if (!window.google) {
-        throw new Error('Google Identity Services não carregado');
-      }
-
-      // Configurar Google Sign-In
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        scope: 'email profile',
-        callback: async (response: any) => {
-          if (response.error) {
-            throw new Error('Erro na autenticação Google');
-          }
-
-          try {
-            // Enviar token para o backend
-            const backendResponse = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/login`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                idToken: response.access_token,
-              }),
-            });
-
-            const data = await backendResponse.json();
-
-            if (!backendResponse.ok) {
-              throw new Error(data.msg || 'Erro no servidor');
-            }
-
-            // Login bem-sucedido
-            console.log('Login Google bem-sucedido:', data);
-            
-            // TODO: Atualizar contexto de autenticação
-            // await login(data.data.user, data.data.token);
-            
-          } catch (error: any) {
-            console.error('Erro ao processar login Google:', error);
-            setLoginError(error.message || 'Erro ao processar login Google');
-          }
-        },
-      });
-
-      // Solicitar token
-      client.requestAccessToken();
-
-    } catch (error: any) {
-      console.error('Erro ao inicializar Google Login:', error);
-      throw error;
-    }
-  };
-
-  // 🔍 DIAGNÓSTICO - Limpar erro apenas quando mudar de login para registro (REMOVIDO)
-  // useEffect(() => {
-  //   console.log('🔍 Mudança de modo (login/registro):', isSignUp);
-  //   // Só limpar erros quando mudar de modo, não durante o login
-  //   setLoginError(null);
-  //   loginForm.clearErrors();
-  //   registerForm.clearErrors();
-  // }, [isSignUp]);
-
-  // 🔍 DIAGNÓSTICO - Monitorar mudanças no estado de autenticação (REMOVIDO)
-  // useEffect(() => {
-  //   console.log('🔍 LoginPage - Mudança no estado de autenticação:', { isAuthenticated, user });
-  //   
-  //   // 🔍 PROTEÇÃO: Só limpar erros se realmente estiver autenticado
-  //   if (isAuthenticated && user) {
-  //     console.log('✅ Usuário autenticado, limpando erros...');
-  //     setLoginError(null);
-  //     loginForm.clearErrors();
-  //   }
-  //   
-  //   // 🔍 PROTEÇÃO: NÃO fazer NADA quando não está autenticado
-  //   // Isso evita qualquer mudança de estado que possa causar reset
-  //   if (!isAuthenticated && !user) {
-  //     console.log('🔍 Usuário não autenticado, mantendo estado atual...');
-  //     // NÃO limpar erros aqui - isso estava causando o reset!
-  //   }
-  // }, [isAuthenticated, user]);
+  // Renderizar loading se estiver autenticado
+  if (isAuthenticated && user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mx-auto mb-4"></div>
+          <p className="text-blue-700">Redirecionando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (showForgotPassword) {
     return (
@@ -253,6 +227,7 @@ const LoginPage: React.FC = () => {
                     id="forgot-email"
                     type="email"
                     placeholder="seu@email.com"
+                    autoComplete="username"
                     className="pl-10 border-gray-300 focus:border-blue-500"
                     {...forgotPasswordForm.register('email')}
                   />
@@ -330,6 +305,7 @@ const LoginPage: React.FC = () => {
                     id="register-email"
                     type="email"
                     placeholder="seu@email.com"
+                    autoComplete="username"
                     className="pl-10 border-gray-300 focus:border-blue-500"
                     {...registerForm.register('email')}
                   />
@@ -380,6 +356,7 @@ const LoginPage: React.FC = () => {
                     id="register-password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
+                    autoComplete="new-password"
                     className="pl-10 pr-10 border-gray-300 focus:border-blue-500"
                     {...registerForm.register('password')}
                   />
@@ -404,6 +381,7 @@ const LoginPage: React.FC = () => {
                     id="register-confirm-password"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="••••••••"
+                    autoComplete="new-password"
                     className="pl-10 pr-10 border-gray-300 focus:border-blue-500"
                     {...registerForm.register('confirmPassword')}
                   />
@@ -448,6 +426,7 @@ const LoginPage: React.FC = () => {
                     id="login-email"
                     type="email"
                     placeholder="seu@email.com"
+                    autoComplete="username"
                     className={`pl-10 border-gray-300 focus:border-blue-500 ${loginForm.formState.errors.email ? 'border-red-500' : ''
                       }`}
                     {...loginForm.register('email')}
@@ -466,6 +445,7 @@ const LoginPage: React.FC = () => {
                     id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Sua senha"
+                    autoComplete="current-password"
                     className={`pl-10 pr-10 border-gray-300 focus:border-blue-500 ${loginForm.formState.errors.password ? 'border-red-500' : ''
                       }`}
                     {...loginForm.register('password')}
@@ -520,11 +500,36 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
+            {/* Google Login Button */}
             <Button
               type="button"
               variant="outline"
               className="w-full border-gray-300 hover:bg-gray-50"
-              onClick={() => handleSocialLogin('Google')}
+              onClick={async () => {
+                try {
+                  console.log('🔍 Iniciando login com Google...');
+                  setIsLoading(true);
+                  setLoginError(null);
+                  
+                  // Redirecionar diretamente para o Google OAuth
+                  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                  const redirectUri = encodeURIComponent(`${window.location.origin}/google-callback.html`);
+                  const scope = encodeURIComponent('openid email profile');
+                  const responseType = 'code';
+                  
+                  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}&access_type=offline&prompt=consent`;
+                  
+                  console.log('🔍 URL de autorização:', authUrl);
+                  
+                  // Redirecionar para a página de autorização
+                  window.location.href = authUrl;
+                  
+                } catch (error: any) {
+                  console.error('❌ Erro ao iniciar login Google:', error);
+                  setLoginError('Erro ao iniciar login Google');
+                  setIsLoading(false);
+                }
+              }}
               disabled={isLoading}
             >
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
@@ -533,34 +538,30 @@ const LoginPage: React.FC = () => {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
-              Continuar com Google
+              {isLoading ? 'Entrando com Google...' : 'Continuar com Google'}
             </Button>
-
-
           </div>
 
           <div className="text-center">
             <span className="text-gray-600">
               {isSignUp ? 'Já tem uma conta?' : 'Não tem uma conta?'}
             </span>
-                         <button
-               type="button"
-               onClick={() => {
-                 setIsSignUp(!isSignUp);
-                 // Limpar erros apenas quando o usuário mudar de modo manualmente
-                 setLoginError(null);
-                 loginForm.clearErrors();
-                 registerForm.clearErrors();
-               }}
-               className="ml-1 text-blue-700 hover:text-blue-800 font-medium"
-             >
-               {isSignUp ? 'Entrar' : 'Cadastre-se'}
-             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                // Limpar erros apenas quando o usuário mudar de modo manualmente
+                setLoginError(null);
+                loginForm.clearErrors();
+                registerForm.clearErrors();
+              }}
+              className="ml-1 text-blue-700 hover:text-blue-800 font-medium"
+            >
+              {isSignUp ? 'Entrar' : 'Cadastre-se'}
+            </button>
           </div>
         </CardContent>
       </Card>
-
-       
     </div>
   );
 };

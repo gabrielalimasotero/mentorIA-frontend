@@ -12,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   setIsAuthenticated: (value: boolean) => void;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (user: any, token: string) => Promise<void>;
   register: (name: string, email: string, password: string, birthDate: string, institution: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -195,6 +196,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (user: any, token: string) => {
+    console.log('🔍 AuthContext.loginWithGoogle - Iniciando login com Google...');
+    
+    try {
+      console.log('✅ AuthContext.loginWithGoogle - Salvando dados do Google...');
+      
+      // Limpar dados antigos antes de salvar novos
+      userUtils.clearAllAuthData();
+      
+      // Salvar novos dados
+      tokenUtils.saveToken(token);
+      userUtils.saveUser(user);
+      setIsAuthenticated(true);
+      setUser(user);
+      
+      console.log('💾 Dados salvos, verificando se deve fazer pré-carregamento...');
+      
+      // Só fazer pré-carregamento se o usuário já completou o teste de nivelamento
+      if (user.has_completed_leveling_test) {
+        try {
+          await dynamicQuestionsService.preloadUserData();
+          markAsPreloaded();
+          console.log('✅ Pré-carregamento concluído (usuário já completou nivelamento)');
+        } catch (preloadError) {
+          console.log('⚠️ Pré-carregamento falhou, mas login continuará');
+        }
+      } else {
+        console.log('⏭️ Pulando pré-carregamento - usuário ainda não completou teste de nivelamento');
+      }
+      
+      toast({
+        title: 'Login com Google realizado com sucesso!',
+        description: `Bem-vindo(a), ${user.name}!`,
+      });
+      
+      console.log('🎉 Login com Google finalizado com sucesso');
+    } catch (error: any) {
+      console.error('❌ AuthContext.loginWithGoogle - Erro capturado:', error);
+      throw error;
+    }
+  };
+
   const register = async (name: string, email: string, password: string, birthDate: string, institution: string) => {
     // Não controlar loading aqui - será controlado pela LoginPage
     try {
@@ -270,6 +313,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
     setIsAuthenticated,
     login,
+    loginWithGoogle,
     register,
     logout,
     forgotPassword,
